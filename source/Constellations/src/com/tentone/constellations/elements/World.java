@@ -13,8 +13,12 @@ public class World extends Rectangle
 {
 	private static final long serialVersionUID = 2597058350349965364L;
 	
-	public ArrayList<Planet> planets; //ConcurrentLinkedQueue
+	//Planets and creatures
+	public ArrayList<Planet> planets;
 	public ArrayList<Creature> creatures;
+	
+	//World time
+	public double time;
 	
 	//World constructor
 	public World()
@@ -23,6 +27,8 @@ public class World extends Rectangle
 		
 		this.planets = new ArrayList<Planet>();
 		this.creatures = new ArrayList<Creature>();
+		
+		this.time = 0.0;
 	}
 	
 	//Generate random world
@@ -81,8 +87,9 @@ public class World extends Rectangle
 	}
 	
 	//Update world state
-	public void update()
+	public void update(float delta)
 	{
+		
 		//Update planets state
 		/*Iterator<Planet> itp = this.planets.iterator();
 		while(itp.hasNext())
@@ -120,7 +127,7 @@ public class World extends Rectangle
 				{
 					Vector2 dir = new Vector2(planet.x - creature.x, planet.y - creature.y);
 					dir.nor();
-					
+
 					dist *= dist * 10;
 					
 					creature.velocity.add(dir.x / dist, dir.y / dist);
@@ -174,6 +181,5 @@ public class World extends Rectangle
 		
 		return ((xmin > x && xmin < x + width) && (xmax > x && xmax < x + width))
 			&& ((ymin > y && ymin < y + height) && (ymax > y && ymax < y + height));
-		//return this.contains(new Rectangle(circle.x - circle.radius, circle.y - circle.radius, 2f * circle.radius, 2f * circle.radius));
 	}
 }

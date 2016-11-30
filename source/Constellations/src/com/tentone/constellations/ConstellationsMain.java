@@ -5,6 +5,7 @@ import java.util.Iterator;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -23,7 +24,7 @@ public class ConstellationsMain implements ApplicationListener
 	private World world;
 	
 	private Touch touch;
-	
+
 	@Override
 	public void create()
 	{
@@ -42,12 +43,31 @@ public class ConstellationsMain implements ApplicationListener
 		
 		//Generate world
 		world = World.generateWorld();
+		
+		//Input processor to handle mouse scrolling
+		Gdx.input.setInputProcessor(new InputAdapter()
+		{
+			//Mouse scrolled
+			public boolean scrolled(int amount)
+			{
+				camera.zoom = camera.zoom + amount * camera.zoom * 0.25f;
+				if(camera.zoom < 0.5f)
+				{
+					camera.zoom = 0.5f;
+				}
+				camera.update();
+				return false;
+			}
+			
+			//Key Pressed Down
+			//public boolean keyDown(int key){if(key==Input.Keys.PLUS){}}
+		});
 	}
 	
 	@Override
 	public void render()
 	{
-		//Move camera
+		//Move camera with mouse
 		if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT))
 		{
 			Vector2 delta = touch.getDelta(0);
@@ -55,17 +75,48 @@ public class ConstellationsMain implements ApplicationListener
 			camera.position.y += delta.y;
 			camera.update();
 		}
+		
+		//Move camera using keys
+		if(Gdx.input.isKeyPressed(Input.Keys.UP))
+		{
+			camera.position.y += 0.1f;
+			camera.update();
+		}
+		if(Gdx.input.isKeyPressed(Input.Keys.DOWN))
+		{
+			camera.position.y -= 0.1f;
+			camera.update();
+		}
+		if(Gdx.input.isKeyPressed(Input.Keys.RIGHT))
+		{
+			camera.position.x += 0.1f;
+			camera.update();
+		}
+		if(Gdx.input.isKeyPressed(Input.Keys.LEFT))
+		{
+			camera.position.x -= 0.1f;
+			camera.update();
+		}
+		
+		
+		//Dual touch events
 		if(Gdx.input.isTouched(0) && Gdx.input.isTouched(1))
 		{
 			Vector2 a = touch.getDelta(0).cpy();
 			Vector2 b = touch.getDelta(1);
+			float dot = a.dot(b);
 			
 			//Move camera
-			camera.position.x -= (a.x + b.x) / 2;
-			camera.position.y += (a.y + b.y) / 2;
+			camera.position.x -= (a.x + b.x) / 2f;
+			camera.position.y += (a.y + b.y) / 2f;
+
+			//Distance between points
+			float dist = a.dst(b);
 			
 			//Zoom camera
-			camera.zoom += (a.x - b.x) + (a.y - b.y);
+			camera.zoom += dist;
+			
+			//Update camera projection matrix
 			camera.update();
 		}
 		
@@ -78,7 +129,7 @@ public class ConstellationsMain implements ApplicationListener
 		//Send command to selected creatures
 		//TODO <ADD CODE HERE>
 
-		world.update();
+		world.update(Gdx.graphics.getDeltaTime());
 
 		//Render stuff to screen
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -109,7 +160,7 @@ public class ConstellationsMain implements ApplicationListener
 			for(int i = planet.level; i <= planet.size; i++)
 			{
 				shape_renderer.set(ShapeType.Line);
-				shape_renderer.circle(planet.x, planet.y, i, 24);
+				shape_renderer.circle(planet.x, planet.y, i, 32);
 			}
 		}
 				
@@ -131,7 +182,7 @@ public class ConstellationsMain implements ApplicationListener
 			}
 			
 			
-			shape_renderer.circle(creature.x, creature.y, 0.05f, 5);
+			shape_renderer.circle(creature.x, creature.y, 0.05f, 4);
 		}
 		
 		//Draw world border
