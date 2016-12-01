@@ -74,11 +74,11 @@ public class World extends Rectangle
 		world.planets.get(1).owner = b;
 		
 		//Create creatures
-		for(int i = 0; i < 3000; i++)
+		for(int i = 0; i < 100; i++)
 		{
 			Creature creature = new Creature();
 			creature.setPosition((float)Math.random() * world.width, (float)Math.random() * world.height);
-			creature.owner = (i < 1500) ? a : b;
+			creature.owner = (i < 50) ? a : b;
 			
 			world.addCreature(creature);
 		}
@@ -89,7 +89,9 @@ public class World extends Rectangle
 	//Update world state
 	public void update(float delta)
 	{
-		
+		//Update world time
+		time += delta;
+
 		//Update planets state
 		/*Iterator<Planet> itp = this.planets.iterator();
 		while(itp.hasNext())

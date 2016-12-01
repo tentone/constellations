@@ -21,8 +21,14 @@ public class ConstellationsMain implements ApplicationListener
 	private ShapeRenderer shape_renderer;
 	private OrthographicCamera camera;
 	
+	//Drag control
+	private boolean dragging;
+	private Vector2 initial_point, actual_point;
+	
+	//World
 	private World world;
 	
+	//Touch handler
 	private Touch touch;
 
 	@Override
@@ -37,6 +43,11 @@ public class ConstellationsMain implements ApplicationListener
 		//Camera
 		camera = new OrthographicCamera(1, width / height, width);
 		camera.zoom = 20f;
+		
+		//Drag control
+		dragging = false;
+		initial_point = new Vector2(0, 0);
+		actual_point = new Vector2(0, 0);
 		
 		//Touch handler
 		touch = new Touch(camera);
@@ -55,17 +66,21 @@ public class ConstellationsMain implements ApplicationListener
 				{
 					camera.zoom = 0.5f;
 				}
+				else if(camera.zoom > world.width)
+				{
+					camera.zoom = world.width;
+				}
+				
 				camera.update();
 				return false;
 			}
-			
-			//Key Pressed Down
+
 			//public boolean keyDown(int key){if(key==Input.Keys.PLUS){}}
+			//public boolean keyUp(int key){}
 		});
 	}
 	
-	@Override
-	public void render()
+	public void update()
 	{
 		//Move camera with mouse
 		if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT))
@@ -77,60 +92,87 @@ public class ConstellationsMain implements ApplicationListener
 		}
 		
 		//Move camera using keys
-		if(Gdx.input.isKeyPressed(Input.Keys.UP))
+		if(Gdx.input.isKeyPressed(Input.Keys.ANY_KEY))
 		{
-			camera.position.y += 0.1f;
-			camera.update();
+			if(Gdx.input.isKeyPressed(Input.Keys.UP))
+			{
+				camera.position.y += 0.1f;
+				camera.update();
+			}
+			if(Gdx.input.isKeyPressed(Input.Keys.DOWN))
+			{
+				camera.position.y -= 0.1f;
+				camera.update();
+			}
+			if(Gdx.input.isKeyPressed(Input.Keys.RIGHT))
+			{
+				camera.position.x += 0.1f;
+				camera.update();
+			}
+			if(Gdx.input.isKeyPressed(Input.Keys.LEFT))
+			{
+				camera.position.x -= 0.1f;
+				camera.update();
+			}
 		}
-		if(Gdx.input.isKeyPressed(Input.Keys.DOWN))
-		{
-			camera.position.y -= 0.1f;
-			camera.update();
-		}
-		if(Gdx.input.isKeyPressed(Input.Keys.RIGHT))
-		{
-			camera.position.x += 0.1f;
-			camera.update();
-		}
-		if(Gdx.input.isKeyPressed(Input.Keys.LEFT))
-		{
-			camera.position.x -= 0.1f;
-			camera.update();
-		}
-		
 		
 		//Dual touch events
 		if(Gdx.input.isTouched(0) && Gdx.input.isTouched(1))
 		{
 			Vector2 a = touch.getDelta(0).cpy();
 			Vector2 b = touch.getDelta(1);
+			
+			float dist = a.dst(b);
 			float dot = a.dot(b);
 			
 			//Move camera
 			camera.position.x -= (a.x + b.x) / 2f;
 			camera.position.y += (a.y + b.y) / 2f;
 
-			//Distance between points
-			float dist = a.dst(b);
-			
 			//Zoom camera
 			camera.zoom += dist;
 			
 			//Update camera projection matrix
 			camera.update();
+			
+			//Stop dragging
+			dragging = false;
 		}
 		
 		//Select creatures
 		if(Gdx.input.isButtonPressed(Input.Buttons.LEFT))
 		{
+			if(dragging)
+			{
+				actual_point.set(touch.getPosition(0));
+			}
+			else
+			{
+				dragging = true;
+				initial_point.set(touch.getPosition(0));
+				actual_point.set(initial_point);
+			}
+			
+			
 			//TODO <ADD CODE HERE>
 		}
+		else
+		{
+			dragging = false;
 		
-		//Send command to selected creatures
-		//TODO <ADD CODE HERE>
+			//Send command to selected creatures
+			//TODO <ADD CODE HERE>
+		}
 
-		world.update(Gdx.graphics.getDeltaTime());
 
+		world.update(Gdx.graphics.getDeltaTime());	
+	}
+	
+	@Override
+	public void render()
+	{
+		update();
+		
 		//Render stuff to screen
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -147,7 +189,7 @@ public class ConstellationsMain implements ApplicationListener
 			
 			if(planet.owner == null)
 			{
-				shape_renderer.setColor(0.4f, 0.4f, 0.4f, 1);
+				shape_renderer.setColor(0.4f, 0.4f, 0.4f, 1f);
 			}
 			else
 			{
@@ -174,7 +216,7 @@ public class ConstellationsMain implements ApplicationListener
 			
 			if(creature.owner == null)
 			{
-				shape_renderer.setColor(0.8f, 0.8f, 0.8f, 1);
+				shape_renderer.setColor(0.8f, 0.8f, 0.8f, 1f);
 			}
 			else
 			{
@@ -187,12 +229,22 @@ public class ConstellationsMain implements ApplicationListener
 		
 		//Draw world border
 		shape_renderer.set(ShapeType.Line);
-		shape_renderer.setColor(1f, 1f, 0f, 1);
+		shape_renderer.setColor(1f, 1f, 0f, 1f);
 		shape_renderer.rect(world.x, world.y, world.width, world.height);
 
+		//If dragging draw area
+		if(dragging)
+		{
+			shape_renderer.setColor(0f, 1f, 0f, 1f);
+			shape_renderer.circle((initial_point.x + actual_point.x) / 2f, (initial_point.y + actual_point.y) / 2f, initial_point.dst(actual_point) / 2f, 32);
+		}
+		
+		//Highlight selected creatures
+		
+		
 		shape_renderer.end();	 
 	}
-
+	
 	@Override
 	public void resize(int width, int height)
 	{

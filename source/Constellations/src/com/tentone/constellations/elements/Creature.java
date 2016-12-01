@@ -25,8 +25,8 @@ public class Creature extends Vector2
 	{
 		this.add(velocity);
 		
-		this.velocity.x *= 0.7;
-		this.velocity.y *= 0.7;
+		this.velocity.x *= 0.3;
+		this.velocity.y *= 0.3;
 	}
 	
 	//Set creature position
