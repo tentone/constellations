@@ -22,7 +22,7 @@ public class Planet extends Circle
 	//Planet constructor
 	public Planet(int size, int level)
 	{
-		super(0, 0, size);
+		super(0, 0, size + 1);
 		
 		assert level <= size;
 		

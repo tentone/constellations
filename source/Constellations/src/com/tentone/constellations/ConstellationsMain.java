@@ -7,6 +7,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Vector2;
@@ -18,36 +20,69 @@ import com.tentone.constellations.input.Touch;
 
 public class ConstellationsMain implements ApplicationListener
 {
-	private ShapeRenderer shape_renderer;
+	public final String NAME = "Constellations";
+	public final String VERSION = "V0.0.1";
+	
+	//Rendering
+	private ShapeRenderer shape;
+	private SpriteBatch batch;
+	
+	//Font
+	private BitmapFont font;
+	
+	//Camera
 	private OrthographicCamera camera;
 	
-	//Drag control
-	private boolean dragging;
-	private Vector2 initial_point, actual_point;
+	//Selection control
+	private boolean selecting;
+	
+	//Touch zoom and move
+	private boolean moving;
+	private float initial_zoom;
+	private Vector2 initial_position;
+	
+	//Touch points
+	private Vector2[] initial_point, actual_point;
 	
 	//World
 	private World world;
 	
 	//Touch handler
 	private Touch touch;
-
+	
 	@Override
 	public void create()
 	{
 		float width = Gdx.graphics.getWidth();
 		float height = Gdx.graphics.getHeight();
 		
-		//Shape renderer
-		shape_renderer = new ShapeRenderer();
+		//Rendering
+		shape = new ShapeRenderer();
+		batch = new SpriteBatch();
+		
+		//Font
+		font = new BitmapFont();
+		font.setColor(1.0f, 1.0f, 1.0f, 1.0f);
 		
 		//Camera
 		camera = new OrthographicCamera(1, width / height, width);
 		camera.zoom = 20f;
 		
-		//Drag control
-		dragging = false;
-		initial_point = new Vector2(0, 0);
-		actual_point = new Vector2(0, 0);
+		//Flags
+		selecting = false;
+		moving = false;
+		initial_position = new Vector2(0, 0);
+		
+		//Points
+		initial_point = new Vector2[2];
+		actual_point = new Vector2[2];
+		
+		for(int i = 0; i < initial_point.length; i++)
+		{
+			initial_point[i] = new Vector2(0, 0);
+			actual_point[i] = new Vector2(0, 0);
+		}
+
 		
 		//Touch handler
 		touch = new Touch(camera);
@@ -61,7 +96,7 @@ public class ConstellationsMain implements ApplicationListener
 			//Mouse scrolled
 			public boolean scrolled(int amount)
 			{
-				camera.zoom = camera.zoom + amount * camera.zoom * 0.25f;
+				camera.zoom += amount * camera.zoom * 0.25f;
 				if(camera.zoom < 0.5f)
 				{
 					camera.zoom = 0.5f;
@@ -119,46 +154,67 @@ public class ConstellationsMain implements ApplicationListener
 		//Dual touch events
 		if(Gdx.input.isTouched(0) && Gdx.input.isTouched(1))
 		{
-			Vector2 a = touch.getDelta(0).cpy();
-			Vector2 b = touch.getDelta(1);
-			
-			float dist = a.dst(b);
-			float dot = a.dot(b);
-			
-			//Move camera
-			camera.position.x -= (a.x + b.x) / 2f;
-			camera.position.y += (a.y + b.y) / 2f;
+			if(moving)
+			{
+				//Get actual point
+				actual_point[0].set(touch.getPosition(0));
+				actual_point[1].set(touch.getPosition(1));
+				
+				Vector2 delta = touch.getDelta(0).cpy().add(touch.getDelta(1));
+				
+				//Move camera
+				camera.position.x -= delta.x; //initial_position.x - ((actual_point[0].x + actual_point[1].x)/2f - (initial_point[0].x + initial_point[1].x)/2f);
+				camera.position.y += delta.y; //initial_position.y + ((actual_point[0].y + actual_point[1].y)/2f - (initial_point[0].y + initial_point[1].y)/2f);
 
-			//Zoom camera
-			camera.zoom += dist;
-			
-			//Update camera projection matrix
-			camera.update();
+				//Zoom camera
+				camera.zoom = initial_zoom + (actual_point[0].dst(actual_point[1]) - initial_point[0].dst(initial_point[1]));
+
+				//Update camera projection matrix
+				camera.update();
+			}
+			else
+			{
+				//Store initial touch points
+				initial_point[0].set(touch.getPosition(0));
+				initial_point[1].set(touch.getPosition(1));
+				
+				//Store initial camera position and zoom
+				initial_position.set(camera.position.x, camera.position.y);
+				initial_zoom = camera.zoom;
+				
+				//Set moving flag
+				moving = true;
+			}
 			
 			//Stop dragging
-			dragging = false;
+			selecting = false;
+		}
+		else
+		{
+			//Stop moving
+			moving = false;
 		}
 		
 		//Select creatures
 		if(Gdx.input.isButtonPressed(Input.Buttons.LEFT))
 		{
-			if(dragging)
+			if(selecting)
 			{
-				actual_point.set(touch.getPosition(0));
+				actual_point[0].set(touch.getPosition(0));
 			}
 			else
 			{
-				dragging = true;
-				initial_point.set(touch.getPosition(0));
-				actual_point.set(initial_point);
+				selecting = true;
+				initial_point[0].set(touch.getPosition(0));
+				actual_point[0].set(initial_point[0]);
 			}
 			
 			
-			//TODO <ADD CODE HERE>
+			//TODO <SELECT CREATURE CODE>
 		}
 		else
 		{
-			dragging = false;
+			selecting = false;
 		
 			//Send command to selected creatures
 			//TODO <ADD CODE HERE>
@@ -176,10 +232,12 @@ public class ConstellationsMain implements ApplicationListener
 		//Render stuff to screen
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-		shape_renderer.setProjectionMatrix(camera.combined);
-		shape_renderer.setAutoShapeType(true);
-		shape_renderer.begin();
+		Gdx.gl.glEnable(GL20.GL_BLEND);
+		Gdx.gl.glBlendFunc(GL20.GL_ONE, GL20.GL_ONE);
+		
+		shape.setProjectionMatrix(camera.combined);
+		shape.setAutoShapeType(true);
+		shape.begin();
 
 		//Draw planets
 		Iterator<Planet> itp = world.planets.iterator();
@@ -189,24 +247,24 @@ public class ConstellationsMain implements ApplicationListener
 			
 			if(planet.owner == null)
 			{
-				shape_renderer.setColor(0.4f, 0.4f, 0.4f, 1f);
+				shape.setColor(0.4f, 0.4f, 0.4f, 1f);
 			}
 			else
 			{
-				shape_renderer.setColor(planet.owner.color);
+				shape.setColor(planet.owner.color);
 			}
 
-			shape_renderer.set(ShapeType.Filled);
-			shape_renderer.circle(planet.x, planet.y, planet.level, 32);
+			shape.set(ShapeType.Filled);
+			shape.circle(planet.x, planet.y, planet.level, 32);
 			
 			for(int i = planet.level; i <= planet.size; i++)
 			{
-				shape_renderer.set(ShapeType.Line);
-				shape_renderer.circle(planet.x, planet.y, i, 32);
+				shape.set(ShapeType.Line);
+				shape.circle(planet.x, planet.y, i, 32);
 			}
 		}
 				
-		shape_renderer.set(ShapeType.Filled);
+		shape.set(ShapeType.Filled);
 		
 		//Draw creatures
 		Iterator<Creature> itc = world.creatures.iterator();
@@ -216,51 +274,63 @@ public class ConstellationsMain implements ApplicationListener
 			
 			if(creature.owner == null)
 			{
-				shape_renderer.setColor(0.8f, 0.8f, 0.8f, 1f);
+				shape.setColor(0.8f, 0.8f, 0.8f, 1f);
 			}
 			else
 			{
-				shape_renderer.setColor(creature.owner.color);
+				shape.setColor(creature.owner.color);
 			}
 			
 			
-			shape_renderer.circle(creature.x, creature.y, 0.05f, 4);
+			shape.circle(creature.x, creature.y, 0.1f, 4);
 		}
 		
 		//Draw world border
-		shape_renderer.set(ShapeType.Line);
-		shape_renderer.setColor(1f, 1f, 0f, 1f);
-		shape_renderer.rect(world.x, world.y, world.width, world.height);
+		shape.set(ShapeType.Line);
+		shape.setColor(1f, 1f, 0f, 1f);
+		shape.rect(world.x, world.y, world.width, world.height);
 
 		//If dragging draw area
-		if(dragging)
+		if(selecting)
 		{
-			shape_renderer.setColor(0f, 1f, 0f, 1f);
-			shape_renderer.circle((initial_point.x + actual_point.x) / 2f, (initial_point.y + actual_point.y) / 2f, initial_point.dst(actual_point) / 2f, 32);
+			shape.setColor(0f, 1f, 0f, 1f);
+			shape.circle((initial_point[0].x + actual_point[0].x) / 2f, (initial_point[0].y + actual_point[0].y) / 2f, initial_point[0].dst(actual_point[0]) / 2f, 32);
 		}
 		
 		//Highlight selected creatures
+		//TODO <ADD CODE HERE>
 		
+		//End shape renderer
+		shape.end();
 		
-		shape_renderer.end();	 
+		//Draw overlay
+		batch.begin();
+		font.draw(batch, "FPS " + Gdx.graphics.getFramesPerSecond(), 5f, 60f);
+		font.draw(batch, "Screen Mode " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight(), 5f, 40f);
+		font.draw(batch, NAME + " " + VERSION, 5f, 20f);
+		batch.end();
 	}
 	
 	@Override
 	public void resize(int width, int height)
 	{
 		camera.setAspectRatio((float)width/(float)height);
+		camera.updateSizeRatio(width);
 		camera.update();
 	}
 
 	@Override
 	public void dispose()
 	{
-		shape_renderer.dispose();
+		shape.dispose();
 	}
 	
 	@Override
 	public void pause(){}
 
 	@Override
-	public void resume(){}
+	public void resume()
+	{
+		resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+	}
 }

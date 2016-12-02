@@ -10,8 +10,8 @@ public class Main
 		LwjglApplicationConfiguration cfg = new LwjglApplicationConfiguration();
 		
 		cfg.title = "Constellations";
-		cfg.width = 800;
-		cfg.height = 480;
+		cfg.width = 1024;
+		cfg.height = 600;
 		
 		new LwjglApplication(new ConstellationsMain(), cfg);
 	}

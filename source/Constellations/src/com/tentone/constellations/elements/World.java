@@ -74,11 +74,11 @@ public class World extends Rectangle
 		world.planets.get(1).owner = b;
 		
 		//Create creatures
-		for(int i = 0; i < 100; i++)
+		for(int i = 0; i < 1000; i++)
 		{
 			Creature creature = new Creature();
 			creature.setPosition((float)Math.random() * world.width, (float)Math.random() * world.height);
-			creature.owner = (i < 50) ? a : b;
+			creature.owner = (i < 500) ? a : b;
 			
 			world.addCreature(creature);
 		}
