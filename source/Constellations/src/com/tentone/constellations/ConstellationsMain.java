@@ -1,20 +1,24 @@
 package com.tentone.constellations;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
 import com.tentone.constellations.camera.OrthographicCamera;
 import com.tentone.constellations.elements.Creature;
 import com.tentone.constellations.elements.Planet;
+import com.tentone.constellations.elements.Task;
 import com.tentone.constellations.elements.World;
 import com.tentone.constellations.input.Touch;
 
@@ -43,6 +47,9 @@ public class ConstellationsMain implements ApplicationListener
 	
 	//Touch points
 	private Vector2[] initial_point, actual_point;
+	
+	//Selected creatures
+	private ArrayList<Creature> selected;
 	
 	//World
 	private World world;
@@ -82,7 +89,9 @@ public class ConstellationsMain implements ApplicationListener
 			initial_point[i] = new Vector2(0, 0);
 			actual_point[i] = new Vector2(0, 0);
 		}
-
+		
+		//Selected creature
+		selected = new ArrayList<Creature>();
 		
 		//Touch handler
 		touch = new Touch(camera);
@@ -149,6 +158,11 @@ public class ConstellationsMain implements ApplicationListener
 				camera.position.x -= 0.1f;
 				camera.update();
 			}
+			
+			if(Gdx.input.isKeyPressed(Input.Keys.ESCAPE))
+			{
+				Gdx.app.exit();
+			}
 		}
 		
 		//Dual touch events
@@ -161,13 +175,14 @@ public class ConstellationsMain implements ApplicationListener
 				actual_point[1].set(touch.getPosition(1));
 				
 				Vector2 delta = touch.getDelta(0).cpy().add(touch.getDelta(1));
+				delta.scl(0.5f);
 				
 				//Move camera
-				camera.position.x -= delta.x; //initial_position.x - ((actual_point[0].x + actual_point[1].x)/2f - (initial_point[0].x + initial_point[1].x)/2f);
-				camera.position.y += delta.y; //initial_position.y + ((actual_point[0].y + actual_point[1].y)/2f - (initial_point[0].y + initial_point[1].y)/2f);
+				camera.position.x -= delta.x;
+				camera.position.y += delta.y;
 
 				//Zoom camera
-				camera.zoom = initial_zoom + (actual_point[0].dst(actual_point[1]) - initial_point[0].dst(initial_point[1]));
+				camera.zoom = initial_zoom - actual_point[0].dst(actual_point[1]) - initial_point[0].dst(initial_point[1]);
 
 				//Update camera projection matrix
 				camera.update();
@@ -203,24 +218,55 @@ public class ConstellationsMain implements ApplicationListener
 				actual_point[0].set(touch.getPosition(0));
 			}
 			else
-			{
+			{	
+				//Start selection
 				selecting = true;
 				initial_point[0].set(touch.getPosition(0));
 				actual_point[0].set(initial_point[0]);
 			}
-			
-			
-			//TODO <SELECT CREATURE CODE>
 		}
-		else
+		else if(selecting)
 		{
+			//Reset selection flag
 			selecting = false;
-		
-			//Send command to selected creatures
-			//TODO <ADD CODE HERE>
+			
+			//Calculate selection circle
+			Circle selection = new Circle((initial_point[0].x + actual_point[0].x) / 2f, (initial_point[0].y + actual_point[0].y) / 2f, initial_point[0].dst(actual_point[0]) / 2f);
+			
+			if(selection.radius > 0.1f)
+			{
+				//Clear previous selection
+				selected.clear();
+				
+				//Select creatures
+				Iterator<Creature> creatures = world.creatures.iterator();
+				while(creatures.hasNext())
+				{
+					Creature creature = creatures.next();
+					if(selection.contains(creature))
+					{
+						selected.add(creature);
+					}
+				}
+			}
+			//Send command to selected creatures if any selected
+			else if(selected.size() > 0)
+			{
+				//Move creatures
+				Iterator<Creature> creatures = selected.iterator();
+				while(creatures.hasNext())
+				{
+					Creature creature = creatures.next();
+					creature.target.set(touch.getPosition(0));
+					creature.task = Task.Move;
+				}
+				
+				//Clear selection
+				selected.clear();
+			}
 		}
 
-
+		//Update world
 		world.update(Gdx.graphics.getDeltaTime());	
 	}
 	
@@ -247,7 +293,7 @@ public class ConstellationsMain implements ApplicationListener
 			
 			if(planet.owner == null)
 			{
-				shape.setColor(0.4f, 0.4f, 0.4f, 1f);
+				shape.setColor(Color.GRAY);
 			}
 			else
 			{
@@ -256,12 +302,15 @@ public class ConstellationsMain implements ApplicationListener
 
 			shape.set(ShapeType.Filled);
 			shape.circle(planet.x, planet.y, planet.level, 32);
+			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
 			
-			for(int i = planet.level; i <= planet.size; i++)
+			for(int i = planet.level + 1; i <= planet.size; i++)
 			{
 				shape.set(ShapeType.Line);
 				shape.circle(planet.x, planet.y, i, 32);
 			}
+			
+			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
 		}
 				
 		shape.set(ShapeType.Filled);
@@ -272,16 +321,16 @@ public class ConstellationsMain implements ApplicationListener
 		{
 			Creature creature = itc.next();
 			
-			if(creature.owner == null)
-			{
-				shape.setColor(0.8f, 0.8f, 0.8f, 1f);
-			}
-			else
-			{
-				shape.setColor(creature.owner.color);
-			}
-			
-			
+			shape.setColor(creature.owner != null ? creature.owner.color : Color.GRAY);
+			shape.circle(creature.x, creature.y, 0.1f, 4);
+		}
+		
+		//Highlight selected creatures
+		itc = selected.iterator();
+		shape.setColor(0.8f, 0.8f, 0.8f, 1f);
+		while(itc.hasNext())
+		{
+			Creature creature = itc.next();
 			shape.circle(creature.x, creature.y, 0.1f, 4);
 		}
 		
@@ -297,14 +346,14 @@ public class ConstellationsMain implements ApplicationListener
 			shape.circle((initial_point[0].x + actual_point[0].x) / 2f, (initial_point[0].y + actual_point[0].y) / 2f, initial_point[0].dst(actual_point[0]) / 2f, 32);
 		}
 		
-		//Highlight selected creatures
-		//TODO <ADD CODE HERE>
-		
 		//End shape renderer
 		shape.end();
 		
 		//Draw overlay
 		batch.begin();
+		font.draw(batch, "Selected " + selected.size(), 5f, 120f);
+		font.draw(batch, "Planets " + world.planets.size(), 5f, 100f);
+		font.draw(batch, "Creatures " + world.creatures.size(), 5f, 80f);
 		font.draw(batch, "FPS " + Gdx.graphics.getFramesPerSecond(), 5f, 60f);
 		font.draw(batch, "Screen Mode " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight(), 5f, 40f);
 		font.draw(batch, NAME + " " + VERSION, 5f, 20f);

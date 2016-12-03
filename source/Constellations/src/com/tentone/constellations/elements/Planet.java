@@ -6,16 +6,20 @@ import com.tentone.constellations.Player;
 public class Planet extends Circle
 {	
 	private static final long serialVersionUID = -4799808330666229595L;
-
+	private static final float SPAWN_TIME = 1f;
+	
 	//World pointer
 	public World world;
 		
 	//Planet attributes
 	public int size; //Planet size (max level)
-	public float orbit; //Orbit ring size
+
+	//Identification
+	public Player owner;
+	public int id;
 	
 	//Runtime variables
-	public Player owner; //Planet owner
+	public float time;
 	public int life; //max life = level * 100
 	public int level; //max level = size
 	
@@ -27,10 +31,39 @@ public class Planet extends Circle
 		assert level <= size;
 		
 		this.size = size;
-		
-		this.life = 100 * level;
 		this.level = level;
+		this.life = 0;
+		
+		this.time = 0.0f;
+		
 		this.owner = null;
+		this.id = (int)(Math.random() * Integer.MAX_VALUE);
+	}
+	
+	//Update planet
+	public void update(float delta)
+	{
+		if(owner != null)
+		{
+			//Update time
+			this.time += delta;
+			
+			//Check time to spawn creatures
+			if(time > SPAWN_TIME)
+			{
+				time -= SPAWN_TIME;
+
+				//Spawn creatures
+				for(int i = 0; i < this.level; i++)
+				{
+					Creature creature = new Creature();
+					creature.owner = owner;
+					creature.set(x + (float)Math.random() * 0.01f, y + (float)Math.random() * 0.01f);
+					
+					world.addCreature(creature);
+				}
+			}
+		}
 	}
 	
 	//Set level 
@@ -52,5 +85,6 @@ public class Planet extends Circle
 	public void setOwner(Player player)
 	{
 		this.owner = player;
+		this.life = (player != null) ? 100 : 0;
 	}
 }

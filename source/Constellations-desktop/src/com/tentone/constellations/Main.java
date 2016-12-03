@@ -12,6 +12,10 @@ public class Main
 		cfg.title = "Constellations";
 		cfg.width = 1024;
 		cfg.height = 600;
+		cfg.backgroundFPS = 0;
+		cfg.foregroundFPS = 0;
+		cfg.vSyncEnabled = true;
+		cfg.useGL30 = true;
 		
 		new LwjglApplication(new ConstellationsMain(), cfg);
 	}

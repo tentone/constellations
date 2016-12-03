@@ -1,12 +1,11 @@
 package com.tentone.constellations.elements;
 
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
 import com.tentone.constellations.Player;
 
 public class World extends Rectangle
@@ -14,8 +13,8 @@ public class World extends Rectangle
 	private static final long serialVersionUID = 2597058350349965364L;
 	
 	//Planets and creatures
-	public ArrayList<Planet> planets;
-	public ArrayList<Creature> creatures;
+	public ConcurrentLinkedQueue<Planet> planets;
+	public ConcurrentLinkedQueue<Creature> creatures;
 	
 	//World time
 	public double time;
@@ -23,10 +22,10 @@ public class World extends Rectangle
 	//World constructor
 	public World()
 	{
-		super(0, 0, 40, 25);
+		super(0, 0, 45, 25);
 		
-		this.planets = new ArrayList<Planet>();
-		this.creatures = new ArrayList<Creature>();
+		this.planets = new ConcurrentLinkedQueue<Planet>();
+		this.creatures = new ConcurrentLinkedQueue<Creature>();
 		
 		this.time = 0.0;
 	}
@@ -50,6 +49,7 @@ public class World extends Rectangle
 				colliding = false;
 				
 				planet = new Planet((int)Math.ceil(Math.random() * 2.0) + 1, 1);
+				planet.setOwner((i == 0) ? a : (i == 1) ? b : null);
 				
 				while(!world.contains(planet))
 				{
@@ -69,19 +69,15 @@ public class World extends Rectangle
 			world.addPlanet(planet);
 		}
 		
-		//Give player a and b a a starting planet
-		world.planets.get(0).owner = a;
-		world.planets.get(1).owner = b;
-		
-		//Create creatures
-		for(int i = 0; i < 1000; i++)
+		//Create creatures at random
+		/*for(int i = 0; i < 1000; i++)
 		{
 			Creature creature = new Creature();
 			creature.setPosition((float)Math.random() * world.width, (float)Math.random() * world.height);
 			creature.owner = (i < 500) ? a : b;
 			
 			world.addCreature(creature);
-		}
+		}*/
 		
 		return world;
 	}
@@ -89,86 +85,41 @@ public class World extends Rectangle
 	//Update world state
 	public void update(float delta)
 	{
-		//Update world time
-		time += delta;
-
-		//Update planets state
-		/*Iterator<Planet> itp = this.planets.iterator();
-		while(itp.hasNext())
+		//Don't let delta get to high
+		if(delta > 0.04f)
 		{
-			Planet planet = itp.next();
-			
-			if(planet.owner != null)
-			{
-				for(int i = 0; i < planet.level; i++)
-				{
-					Creature creature = new Creature();
-					creature.owner = planet.owner;
-					creature.x = planet.x;
-					creature.y = planet.y;
-					
-					this.creatures.add(creature);
-				}
-			}
-		}*/
-		
-		//Update creatures state
-		Iterator<Creature> itc = this.creatures.iterator();
-		while(itc.hasNext())
-		{
-			Creature creature = itc.next();
-			
-			Iterator<Planet> itpl = this.planets.iterator();
-			while(itpl.hasNext())
-			{
-				Planet planet = itpl.next();
-				float dist = creature.dst(planet.x, planet.y);
-
-				//Outside the planet ring
-				if(dist > planet.level + 1)
-				{
-					Vector2 dir = new Vector2(planet.x - creature.x, planet.y - creature.y);
-					dir.nor();
-
-					dist *= dist * 10;
-					
-					creature.velocity.add(dir.x / dist, dir.y / dist);
-				}
-				//Inside the planet core
-				else if(dist < planet.level)
-				{
-					Vector2 dir = new Vector2(creature.x - planet.x, creature.y - planet.y);
-					dir.nor();
-
-					dist *= dist * 0.1f;
-					
-					creature.velocity.add(dir.x * dist, dir.y * dist);
-				}
-				//Inside the planet ring
-				else if(dist > planet.level && dist < planet.level + 1)
-				{
-					Vector2 dir = new Vector2(creature.x - planet.x, creature.y - planet.y);
-					dir.nor();
-					dir.rotateRad(1.57f * (dist - planet.level));
-					
-					creature.velocity.add(dir.x * 0.01f, dir.y * 0.01f);
-				}
-				
-				creature.update();
-			}
+			delta = 0.04f;
 		}
 		
+		//Update world time
+		this.time += delta;
+		
+		//Update creatures state
+		Iterator<Creature> creatures = this.creatures.iterator();
+		while(creatures.hasNext())
+		{
+			creatures.next().update(delta);
+		}
+		
+		//Update planets
+		Iterator<Planet> planets = this.planets.iterator();
+		while(planets.hasNext())
+		{
+			planets.next().update(delta);
+		}
 	}
 	
 	//Add a planet to the world
 	public void addPlanet(Planet planet)
 	{
+		planet.world = this;
 		this.planets.add(planet);
 	}
 	
 	//Add a creature to the world
 	public void addCreature(Creature creature)
 	{
+		creature.world = this;
 		this.creatures.add(creature);
 	}
 	
@@ -176,12 +127,12 @@ public class World extends Rectangle
 	public boolean contains(Circle circle)
 	{
 		float xmin = circle.x - circle.radius;
-		float xmax = xmin + 2f * circle.radius;
+		float xmax = circle.x + circle.radius;
 
 		float ymin = circle.y - circle.radius;
-		float ymax = ymin + 2f * circle.radius;
+		float ymax = circle.y + circle.radius;
 		
-		return ((xmin > x && xmin < x + width) && (xmax > x && xmax < x + width))
-			&& ((ymin > y && ymin < y + height) && (ymax > y && ymax < y + height));
+		return (xmin >= x && xmin <= x + width) && (xmax >= x && xmax <= x + width)
+			&& (ymin >= y && ymin <= y + height) && (ymax >= y && ymax <= y + height);
 	}
 }
