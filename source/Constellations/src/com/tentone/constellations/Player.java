@@ -1,6 +1,7 @@
 package com.tentone.constellations;
 
 import com.badlogic.gdx.graphics.Color;
+import com.tentone.constellations.elements.Element;
 
 public class Player
 {
@@ -12,7 +13,14 @@ public class Player
 	public Player(String name, Integer id, Color color)
 	{
 		this.name = name;
-		this.id = (id != null) ? id : (int)(Math.random() * Integer.MAX_VALUE);
-		this.color = (color != null) ? color : new Color();
+		this.id = (id != null) ? id : Element.generateID();
+		this.color = (color != null) ? color : Element.generateColor();
+	}
+	
+	public Player(String name)
+	{
+		this.name = name;
+		this.id = Element.generateID();
+		this.color = Element.generateColor();
 	}
 }

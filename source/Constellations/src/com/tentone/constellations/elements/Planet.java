@@ -24,18 +24,18 @@ public class Planet extends Circle
 	public int level; //max level = size
 	
 	//Planet constructor
-	public Planet(int size, int level)
+	public Planet(int size)
 	{
 		super(0, 0, size + 1);
 		
-		assert level <= size;
-		
 		this.size = size;
-		this.level = level;
+		
+		//Runtime
+		this.time = 0.0f;
+		this.level = 0;
 		this.life = 0;
 		
-		this.time = 0.0f;
-		
+		//Identification
 		this.owner = null;
 		this.id = (int)(Math.random() * Integer.MAX_VALUE);
 	}
@@ -64,6 +64,29 @@ public class Planet extends Circle
 				}
 			}
 		}
+	}
+	
+	//Build planet
+	public void constructPlanet(Creature creature)
+	{
+		creature.destroy();
+		life += 2;
+		
+		this.owner = creature.owner; 
+	}
+	
+	//Inflict damage to planet
+	public void inflictDamage(Creature creature)
+	{
+		creature.destroy();
+		life -= 2;
+		
+		if(life <= 0)
+		{
+			this.owner = null;
+			this.level = 0;
+			this.life = 0;
+		}		
 	}
 	
 	//Set level 

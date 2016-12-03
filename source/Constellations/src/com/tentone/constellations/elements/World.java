@@ -3,7 +3,6 @@ package com.tentone.constellations.elements;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
 import com.tentone.constellations.Player;
@@ -35,8 +34,8 @@ public class World extends Rectangle
 	{
 		World world = new World();
 		
-		Player a = new Player("a", null, Color.RED);
-		Player b = new Player("b", null, Color.BLUE);
+		Player a = new Player("a");
+		Player b = new Player("b");
 		
 		//Create planets
 		for(int i = 0; i < 10; i++)
@@ -48,8 +47,13 @@ public class World extends Rectangle
 			{
 				colliding = false;
 				
-				planet = new Planet((int)Math.ceil(Math.random() * 2.0) + 1, 1);
-				planet.setOwner((i == 0) ? a : (i == 1) ? b : null);
+				planet = new Planet((int)Math.ceil(Math.random() * 2.0) + 1);
+				if(i < 2)
+				{
+					planet.setOwner((i == 0) ? a : (i == 1) ? b : null);
+					planet.setLevel(1);
+				}
+				
 				
 				while(!world.contains(planet))
 				{

@@ -56,6 +56,19 @@ public class Creature extends Vector2
 				//Inside the planet core
 				if(distance < planet.level)
 				{	
+					if(planet.owner == null)
+					{
+						planet.constructPlanet(this);
+					}
+					else if(planet.owner != owner)
+					{
+						planet.inflictDamage(this);
+					}
+					else if(task == Task.Upgrade)
+					{
+						
+					}
+					
 					direction.scl(0.1f);
 					velocity.sub(direction.x, direction.y);
 				}
@@ -91,7 +104,7 @@ public class Creature extends Vector2
 		{
 			float distance = dst(target);
 			
-			if(distance < 0.1f)
+			if(distance < 0.3f)
 			{
 				task = Task.Idle;
 			}
