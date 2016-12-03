@@ -14,6 +14,6 @@ public class Element
 	//Generate random ID
 	public static int generateID()
 	{
-		return (int)(Math.random() * Integer.MAX_VALUE);
+		return MathUtils.random(0, 65535);
 	}
 }

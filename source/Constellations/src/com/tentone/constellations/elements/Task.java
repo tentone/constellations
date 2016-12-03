@@ -1,3 +1,3 @@
 package com.tentone.constellations.elements;
 
-public enum Task {Idle, Move, Upgrade, Colonize}
+public enum Task {Idle, Move, Upgrade}

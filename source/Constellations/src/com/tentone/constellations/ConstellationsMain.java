@@ -300,17 +300,31 @@ public class ConstellationsMain implements ApplicationListener
 				shape.setColor(planet.owner.color);
 			}
 
-			shape.set(ShapeType.Filled);
-			shape.circle(planet.x, planet.y, planet.level, 32);
-			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
-			
-			for(int i = planet.level + 1; i <= planet.size; i++)
+			if(planet.conquered)
 			{
+				shape.set(ShapeType.Filled);
+				shape.circle(planet.x, planet.y, planet.level, 32);
+				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
+				
 				shape.set(ShapeType.Line);
-				shape.circle(planet.x, planet.y, i, 32);
+				for(int i = planet.level + 1; i <= planet.size; i++)
+				{
+					shape.circle(planet.x, planet.y, i, 32);
+				}
+				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
 			}
-			
-			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
+			else
+			{
+				shape.set(ShapeType.Filled);
+				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
+				
+				shape.set(ShapeType.Line);
+				for(int i = planet.level; i <= planet.size; i++)
+				{
+					shape.circle(planet.x, planet.y, i, 32);
+				}
+				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
+			}
 		}
 				
 		shape.set(ShapeType.Filled);

@@ -11,11 +11,12 @@ public class World extends Rectangle
 {
 	private static final long serialVersionUID = 2597058350349965364L;
 	
-	//Planets and creatures
+	//Planets, creatures and players
+	public ConcurrentLinkedQueue<Player> players;
 	public ConcurrentLinkedQueue<Planet> planets;
 	public ConcurrentLinkedQueue<Creature> creatures;
 	
-	//World time
+	//World global time
 	public double time;
 	
 	//World constructor
@@ -23,6 +24,7 @@ public class World extends Rectangle
 	{
 		super(0, 0, 45, 25);
 		
+		this.players = new ConcurrentLinkedQueue<Player>();
 		this.planets = new ConcurrentLinkedQueue<Planet>();
 		this.creatures = new ConcurrentLinkedQueue<Creature>();
 		
@@ -34,8 +36,12 @@ public class World extends Rectangle
 	{
 		World world = new World();
 		
+		
 		Player a = new Player("a");
 		Player b = new Player("b");
+		
+		//Create player initial planets
+		
 		
 		//Create planets
 		for(int i = 0; i < 10; i++)
@@ -73,26 +79,20 @@ public class World extends Rectangle
 			world.addPlanet(planet);
 		}
 		
-		//Create creatures at random
-		/*for(int i = 0; i < 1000; i++)
-		{
-			Creature creature = new Creature();
-			creature.setPosition((float)Math.random() * world.width, (float)Math.random() * world.height);
-			creature.owner = (i < 500) ? a : b;
-			
-			world.addCreature(creature);
-		}*/
-		
 		return world;
 	}
 	
 	//Update world state
 	public void update(float delta)
 	{
-		//Don't let delta get to high
+		//Don't let delta get to high or too low
 		if(delta > 0.04f)
 		{
 			delta = 0.04f;
+		}
+		else if(delta < 0.001f)
+		{
+			delta = 0.001f;
 		}
 		
 		//Update world time

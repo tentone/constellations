@@ -8,7 +8,7 @@ import com.tentone.constellations.Player;
 public class Creature extends Vector2
 {
 	private static final long serialVersionUID = 7669506454940957738L;
-	private static final float friction = 3f;
+	private static final float friction = 2.0f;
 	
 	//World pointer
 	public World world;
@@ -27,7 +27,7 @@ public class Creature extends Vector2
 	//Creature constructor
 	public Creature()
 	{
-		this.id = (int)(Math.random() * Integer.MAX_VALUE);
+		this.id = Element.generateID();
 		this.owner = null;
 		
 		this.task = Task.Idle;
@@ -55,19 +55,9 @@ public class Creature extends Vector2
 				
 				//Inside the planet core
 				if(distance < planet.level)
-				{	
-					if(planet.owner == null)
-					{
-						planet.constructPlanet(this);
-					}
-					else if(planet.owner != owner)
-					{
-						planet.inflictDamage(this);
-					}
-					else if(task == Task.Upgrade)
-					{
-						
-					}
+				{
+					//Process planet collision
+					planet.collidePlanet(this);
 					
 					direction.scl(0.1f);
 					velocity.sub(direction.x, direction.y);
@@ -100,13 +90,13 @@ public class Creature extends Vector2
 		}
 		
 		//Add velocity to move to location
-		if(task == Task.Move)
+		if(this.task != Task.Idle)
 		{
 			float distance = dst(target);
 			
 			if(distance < 0.3f)
 			{
-				task = Task.Idle;
+				this.task = Task.Idle;
 			}
 			else
 			{

@@ -1,27 +1,33 @@
 package com.tentone.constellations.elements;
 
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.MathUtils;
 import com.tentone.constellations.Player;
 
 public class Planet extends Circle
 {	
-	private static final long serialVersionUID = -4799808330666229595L;
-	private static final float SPAWN_TIME = 1f;
+	private static final long serialVersionUID = 2799808330666229595L;
+	
+	//Constants
+	private static final float spawn_time = 1.0f;
+	private static final int life_per_level = 100;
+	private static final int life_per_creature = 2;
 	
 	//World pointer
 	public World world;
 		
-	//Planet attributes
-	public int size; //Planet size (max level)
+	//Planet size
+	public int size;
 
 	//Identification
 	public Player owner;
 	public int id;
 	
 	//Runtime variables
-	public float time;
-	public int life; //max life = level * 100
-	public int level; //max level = size
+	public float time; //Planet time
+	public boolean conquered; //True if planet is conquered
+	public int life; //Max life = level * life per level
+	public int level; //Max level = size
 	
 	//Planet constructor
 	public Planet(int size)
@@ -32,34 +38,49 @@ public class Planet extends Circle
 		
 		//Runtime
 		this.time = 0.0f;
-		this.level = 0;
 		this.life = 0;
+		
+		this.conquered = false;
+		this.level = 1;
 		
 		//Identification
 		this.owner = null;
-		this.id = (int)(Math.random() * Integer.MAX_VALUE);
+		this.id = Element.generateID();
+	}
+	
+	public Planet(int size, int level, Player owner)
+	{
+		super(0, 0, size + 1);
+		
+		this.size = size;
+		this.time = 0.0f;
+		this.level = level;
+		this.life = level * life_per_level;
+		this.conquered = true;
+		
+		this.owner = owner;
+		this.id = Element.generateID();
 	}
 	
 	//Update planet
 	public void update(float delta)
 	{
-		if(owner != null)
+		if(this.conquered)
 		{
 			//Update time
 			this.time += delta;
 			
 			//Check time to spawn creatures
-			if(time > SPAWN_TIME)
+			while(this.time > spawn_time)
 			{
-				time -= SPAWN_TIME;
+				this.time -= spawn_time;
 
 				//Spawn creatures
 				for(int i = 0; i < this.level; i++)
 				{
 					Creature creature = new Creature();
 					creature.owner = owner;
-					creature.set(x + (float)Math.random() * 0.01f, y + (float)Math.random() * 0.01f);
-					
+					creature.set(x + MathUtils.random(-0.01f, 0.01f), y + MathUtils.random(-0.01f, 0.01f));
 					world.addCreature(creature);
 				}
 			}
@@ -67,26 +88,40 @@ public class Planet extends Circle
 	}
 	
 	//Build planet
-	public void constructPlanet(Creature creature)
+	public void collidePlanet(Creature creature)
 	{
-		creature.destroy();
-		life += 2;
+		assert creature != null;
 		
-		this.owner = creature.owner; 
-	}
-	
-	//Inflict damage to planet
-	public void inflictDamage(Creature creature)
-	{
-		creature.destroy();
-		life -= 2;
-		
-		if(life <= 0)
+		if(!this.conquered)
 		{
-			this.owner = null;
-			this.level = 0;
-			this.life = 0;
-		}		
+			if(this.owner == null)
+			{
+				this.owner = creature.owner;
+			}
+	
+			if(creature.owner == this.owner)
+			{
+				creature.destroy();
+				this.life += life_per_creature;
+				if(this.life >= life_per_level)
+				{
+					this.conquered = true;
+				}
+			}
+			else
+			{
+				creature.destroy();
+				this.life -= life_per_creature;
+				if(this.life <= 0)
+				{
+					this.reset();
+				}
+			}
+		}
+		else if(creature.owner != this.owner)
+		{
+			
+		}
 	}
 	
 	//Set level 
@@ -94,7 +129,8 @@ public class Planet extends Circle
 	{
 		assert level <= this.size;
 		
-		this.radius = level;
+		this.level = level;
+		this.life = level * life_per_level;
 	}
 	
 	//Set planet position
@@ -107,7 +143,19 @@ public class Planet extends Circle
 	//Set planet owner
 	public void setOwner(Player player)
 	{
+		assert player != null;
+		
 		this.owner = player;
-		this.life = (player != null) ? 100 : 0;
+		this.life = this.level * life_per_level;
+		this.conquered = true;
+	}
+	
+	//Reset planet to default value
+	public void reset()
+	{
+		this.life = 0;
+		this.level = 1;
+		this.owner = null;
+		this.conquered = false;
 	}
 }
