@@ -92,7 +92,7 @@ public class Planet extends Circle
 	{
 		assert creature != null;
 		
-		if(!this.conquered)
+		if(creature.task == Task.Conquer && !this.conquered)
 		{
 			if(this.owner == null)
 			{
@@ -118,9 +118,24 @@ public class Planet extends Circle
 				}
 			}
 		}
-		else if(creature.owner != this.owner)
+		else if(creature.task == Task.Upgrade && creature.owner == this.owner && this.level < this.size)
 		{
+			creature.destroy();
+			this.life += life_per_creature;
 			
+			if(this.life >= (this.level + 1) * life_per_level)
+			{
+				this.level++;
+			}
+		}
+		else if(this.owner != creature.owner && this.owner != null)
+		{
+			creature.destroy();
+			this.life -= life_per_creature;
+			if(this.life <= 0)
+			{
+				this.reset();
+			}
 		}
 	}
 	

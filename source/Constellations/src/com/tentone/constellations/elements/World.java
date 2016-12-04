@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.tentone.constellations.Player;
 
@@ -40,11 +41,8 @@ public class World extends Rectangle
 		Player a = new Player("a");
 		Player b = new Player("b");
 		
-		//Create player initial planets
-		
-		
 		//Create planets
-		for(int i = 0; i < 10; i++)
+		for(int i = 0; i < 8; i++)
 		{
 			boolean colliding = true;
 			Planet planet = null;
@@ -53,17 +51,17 @@ public class World extends Rectangle
 			{
 				colliding = false;
 				
-				planet = new Planet((int)Math.ceil(Math.random() * 2.0) + 1);
+				planet = new Planet(MathUtils.random(1, 3));
+				while(!world.contains(planet))
+				{
+					planet.setPosition(MathUtils.random(world.width), MathUtils.random(world.height));
+				}
+				
+				//Create player initial planets
 				if(i < 2)
 				{
 					planet.setOwner((i == 0) ? a : (i == 1) ? b : null);
 					planet.setLevel(1);
-				}
-				
-				
-				while(!world.contains(planet))
-				{
-					planet.setPosition((float)Math.random() * world.width, (float)Math.random() * world.height);
 				}
 				
 				Iterator<Planet> itp = world.planets.iterator();

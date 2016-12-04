@@ -259,6 +259,26 @@ public class ConstellationsMain implements ApplicationListener
 					Creature creature = creatures.next();
 					creature.target.set(touch.getPosition(0));
 					creature.task = Task.Move;
+					
+					//Check if clicked on some planet
+					Iterator<Planet> itp = world.planets.iterator();
+					while(itp.hasNext())
+					{
+						Planet planet = itp.next();
+						if(planet.contains(creature.target))
+						{
+							if(!planet.conquered)
+							{
+								creature.task = Task.Conquer;
+							}
+							else if(planet.owner == creature.owner)
+							{
+								creature.task = Task.Upgrade;
+							}
+							
+							break;
+						}
+					}
 				}
 				
 				//Clear selection
