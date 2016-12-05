@@ -23,6 +23,36 @@ public class OrthographicCamera extends com.badlogic.gdx.graphics.OrthographicCa
 		this.resize_mode = ResizeMode.HORIZONTAL;
 	}
 	
+	//Get camera width
+	public float getWidth()
+	{
+		if(this.resize_mode == ResizeMode.HORIZONTAL)
+		{
+			return this.size * this.aspect_ratio;
+		}
+		else if(this.resize_mode == ResizeMode.VERTICAL)
+		{
+			return this.size;
+		}
+		
+		return 0;
+	}
+	
+	//Get camera height
+	public float getHeight()
+	{
+		if(this.resize_mode == ResizeMode.HORIZONTAL)
+		{
+			return this.size;
+		}
+		else if(this.resize_mode == ResizeMode.VERTICAL)
+		{
+			//TODO <ADD CODE HERE>
+		}
+		
+		return 0;
+	}
+	
 	//Set camera aspect ratio
 	public void setAspectRatio(float aspect_ratio)
 	{
@@ -39,6 +69,14 @@ public class OrthographicCamera extends com.badlogic.gdx.graphics.OrthographicCa
 	public void setResizeMode(ResizeMode mode)
 	{
 		this.resize_mode = mode;
+	}
+	
+	//Center camera
+	public void centerCamera()
+	{
+		this.position.x = this.getWidth() / 2f;
+		this.position.y = this.getHeight() / 2f;
+		this.update();
 	}
 	
 	//Update size ratio

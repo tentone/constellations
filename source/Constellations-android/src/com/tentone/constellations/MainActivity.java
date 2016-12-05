@@ -16,6 +16,6 @@ public class MainActivity extends AndroidApplication
 		cfg.hideStatusBar = true;
 		cfg.useImmersiveMode = true;
 		
-		initialize(new ConstellationsMain(), cfg);
+		initialize(new Constellations(), cfg);
 	}
 }

@@ -22,10 +22,10 @@ import com.tentone.constellations.elements.Task;
 import com.tentone.constellations.elements.World;
 import com.tentone.constellations.input.Touch;
 
-public class ConstellationsMain implements ApplicationListener
+public class Constellations implements ApplicationListener
 {
-	public final String NAME = "Constellations";
-	public final String VERSION = "V0.0.1";
+	public static final String NAME = "Constellations";
+	public static final String VERSION = "V0.0.1";
 	
 	//Rendering
 	private ShapeRenderer shape;
@@ -35,7 +35,7 @@ public class ConstellationsMain implements ApplicationListener
 	private BitmapFont font;
 	
 	//Camera
-	private OrthographicCamera camera;
+	private OrthographicCamera camera, overlay;
 	
 	//Selection control
 	private boolean selecting;
@@ -75,6 +75,8 @@ public class ConstellationsMain implements ApplicationListener
 		camera = new OrthographicCamera(1, width / height, width);
 		camera.zoom = 20f;
 		
+		overlay = new OrthographicCamera(500, width / height, width);
+		
 		//Flags
 		selecting = false;
 		moving = false;
@@ -106,6 +108,7 @@ public class ConstellationsMain implements ApplicationListener
 			public boolean scrolled(int amount)
 			{
 				camera.zoom += amount * camera.zoom * 0.25f;
+				
 				if(camera.zoom < 0.5f)
 				{
 					camera.zoom = 0.5f;
@@ -118,14 +121,13 @@ public class ConstellationsMain implements ApplicationListener
 				camera.update();
 				return false;
 			}
-
-			//public boolean keyDown(int key){if(key==Input.Keys.PLUS){}}
-			//public boolean keyUp(int key){}
 		});
 	}
 	
 	public void update()
 	{
+		touch.update();
+		
 		//Move camera with mouse
 		if(Gdx.input.isButtonPressed(Input.Buttons.RIGHT))
 		{
@@ -311,40 +313,18 @@ public class ConstellationsMain implements ApplicationListener
 		{
 			Planet planet = itp.next();
 			
-			if(planet.owner == null)
-			{
-				shape.setColor(Color.GRAY);
-			}
-			else
-			{
-				shape.setColor(planet.owner.color);
-			}
 
-			if(planet.conquered)
+			shape.setColor((planet.owner == null) ? Color.GRAY : planet.owner.color);
+			shape.set(ShapeType.Filled);
+			shape.circle(planet.x, planet.y, planet.life / (float) Planet.life_per_level, 32);
+			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
+			
+			shape.set(ShapeType.Line);
+			for(int i = planet.level; i <= planet.size; i++)
 			{
-				shape.set(ShapeType.Filled);
-				shape.circle(planet.x, planet.y, planet.level, 32);
-				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
-				
-				shape.set(ShapeType.Line);
-				for(int i = planet.level + 1; i <= planet.size; i++)
-				{
-					shape.circle(planet.x, planet.y, i, 32);
-				}
-				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
+				shape.circle(planet.x, planet.y, i, 32);
 			}
-			else
-			{
-				shape.set(ShapeType.Filled);
-				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
-				
-				shape.set(ShapeType.Line);
-				for(int i = planet.level; i <= planet.size; i++)
-				{
-					shape.circle(planet.x, planet.y, i, 32);
-				}
-				shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
-			}
+			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
 		}
 				
 		shape.set(ShapeType.Filled);
@@ -384,6 +364,7 @@ public class ConstellationsMain implements ApplicationListener
 		shape.end();
 		
 		//Draw overlay
+		batch.setProjectionMatrix(overlay.combined);
 		batch.begin();
 		font.draw(batch, "Selected " + selected.size(), 5f, 120f);
 		font.draw(batch, "Planets " + world.planets.size(), 5f, 100f);
@@ -400,6 +381,9 @@ public class ConstellationsMain implements ApplicationListener
 		camera.setAspectRatio((float)width/(float)height);
 		camera.updateSizeRatio(width);
 		camera.update();
+		
+		overlay.setAspectRatio((float)width/(float)height);
+		overlay.centerCamera();
 	}
 
 	@Override

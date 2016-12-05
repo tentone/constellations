@@ -3,12 +3,11 @@ package com.tentone.constellations.input;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.tentone.constellations.camera.OrthographicCamera;
-import com.tentone.constellations.camera.ResizeMode;
 
 public class Touch
 {
 	//Position and delta
-	public Vector2[] position, delta;
+	public Pointer[] pointers;
 	
 	//Camera
 	private OrthographicCamera camera;
@@ -18,49 +17,56 @@ public class Touch
 	{
 		this.camera = camera;
 
-		this.delta = new Vector2[2];
-		this.position = new Vector2[2];
-		
+		this.pointers = new Pointer[2];
 		for(int i = 0; i < 2; i++)
 		{
-			this.delta[i] = new Vector2(0, 0);
-			this.position[i] = new Vector2(0, 0);
+			this.pointers[i] = new Pointer();
 		}
+	}
+	
+	//Update input status
+	public void update()
+	{
+		float ratio = camera.size_ratio * camera.zoom;
+		
+		//if(camera.resize_mode == ResizeMode.HORIZONTAL)
+		float offset_x = camera.position.x - (camera.size / 2f * camera.aspect_ratio * camera.zoom);
+		float offset_y = (camera.size / 2f * camera.zoom) + camera.position.y;
+		
+		for(int i = 0; i < pointers.length; i++)
+		{
+			if(Gdx.input.isTouched(i))
+			{
+				pointers[i].update(true);
+				
+				pointers[i].position.x = Gdx.input.getX(i) * ratio + offset_x;
+				pointers[i].position.y = -Gdx.input.getY(i) * ratio + offset_y;
+				
+				pointers[i].delta.x = Gdx.input.getDeltaX(i) * ratio;
+				pointers[i].delta.y = Gdx.input.getDeltaY(i) * ratio;
+			}
+			else
+			{
+				pointers[i].update(false);
+			}
+		}
+	}
+	
+	//Check is a pointer is pressed
+	public boolean isPressed(int pointer)
+	{
+		return false;
 	}
 	
 	//Update input
 	public Vector2 getPosition(int pointer)
 	{
-		Vector2 position = new Vector2(0, 0);
-		
-		if(camera.resize_mode == ResizeMode.HORIZONTAL)
-		{
-			position.x = (Gdx.input.getX(pointer) * camera.size_ratio * camera.zoom) + camera.position.x - (camera.size * camera.zoom * camera.aspect_ratio / 2f);
-			position.y = ((camera.size - Gdx.input.getY(pointer) * camera.size_ratio) * camera.zoom) + camera.position.y - (camera.size / 2f * camera.zoom);
-		}
-		else if(camera.resize_mode == ResizeMode.VERTICAL)
-		{
-			//TODO <ADD CODE HERE>
-		}
-		
-		return position;
+		return pointers[pointer].position;
 	}
 	
 	//Get pointer delta
 	public Vector2 getDelta(int pointer)
 	{
-		Vector2 delta = new Vector2(0, 0);
-		
-		if(camera.resize_mode == ResizeMode.HORIZONTAL)
-		{
-			delta.x = Gdx.input.getDeltaX(pointer) * camera.size_ratio * camera.zoom;
-			delta.y = Gdx.input.getDeltaY(pointer) * camera.size_ratio * camera.zoom;
-		}
-		else if(camera.resize_mode == ResizeMode.VERTICAL)
-		{
-			//TODO <ADD CODE HERE>
-		}
-		
-		return delta;
+		return pointers[pointer].delta;
 	}
 }

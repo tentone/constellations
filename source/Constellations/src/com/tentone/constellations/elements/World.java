@@ -37,31 +37,44 @@ public class World extends Rectangle
 	{
 		World world = new World();
 		
-		
 		Player a = new Player("a");
+		world.addPlayer(a);
+		
+		Planet planet = new Planet(3);
+		while(!world.contains(planet))
+		{
+			planet.setPosition(MathUtils.random(world.width * 0.1f), MathUtils.random(world.height));
+		}
+		planet.setOwner(a);
+		planet.setLevel(1);
+		world.addPlanet(planet);
+		
 		Player b = new Player("b");
+		world.addPlayer(b);
+		
+		planet = new Planet(3);
+		while(!world.contains(planet))
+		{
+			planet.setPosition(world.width * 0.8f + MathUtils.random(world.width * 0.1f), MathUtils.random(world.height));
+		}
+		planet.setOwner(b);
+		planet.setLevel(1);
+		world.addPlanet(planet);
 		
 		//Create planets
 		for(int i = 0; i < 8; i++)
 		{
 			boolean colliding = true;
-			Planet planet = null;
+			planet = null;
 			
 			while(colliding)
 			{
 				colliding = false;
 				
-				planet = new Planet(MathUtils.random(1, 3));
+				planet = new Planet(MathUtils.random(1, 2));
 				while(!world.contains(planet))
 				{
 					planet.setPosition(MathUtils.random(world.width), MathUtils.random(world.height));
-				}
-				
-				//Create player initial planets
-				if(i < 2)
-				{
-					planet.setOwner((i == 0) ? a : (i == 1) ? b : null);
-					planet.setLevel(1);
 				}
 				
 				Iterator<Planet> itp = world.planets.iterator();
@@ -83,14 +96,14 @@ public class World extends Rectangle
 	//Update world state
 	public void update(float delta)
 	{
-		//Don't let delta get to high or too low
-		if(delta > 0.04f)
+		//Don't let delta get to high or too low (10~300fps)
+		if(delta > 0.1f)
 		{
-			delta = 0.04f;
+			delta = 0.1f;
 		}
-		else if(delta < 0.001f)
+		else if(delta < 0.00333f)
 		{
-			delta = 0.001f;
+			delta = 0.00333f;
 		}
 		
 		//Update world time
@@ -111,6 +124,12 @@ public class World extends Rectangle
 		}
 	}
 	
+	//Add a creature to the world
+	public void addPlayer(Player player)
+	{
+		this.players.add(player);
+	}
+	
 	//Add a planet to the world
 	public void addPlanet(Planet planet)
 	{
@@ -128,13 +147,7 @@ public class World extends Rectangle
 	//Check if a planet is inside the world
 	public boolean contains(Circle circle)
 	{
-		float xmin = circle.x - circle.radius;
-		float xmax = circle.x + circle.radius;
-
-		float ymin = circle.y - circle.radius;
-		float ymax = circle.y + circle.radius;
-		
-		return (xmin >= x && xmin <= x + width) && (xmax >= x && xmax <= x + width)
-			&& (ymin >= y && ymin <= y + height) && (ymax >= y && ymax <= y + height);
+		return circle.x - circle.radius >= x && circle.x + circle.radius <= x + width
+				&& circle.y - circle.radius >= y && circle.y + circle.radius <= y + height;
 	}
 }

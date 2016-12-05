@@ -9,14 +9,15 @@ public class Main
 	{
 		LwjglApplicationConfiguration cfg = new LwjglApplicationConfiguration();
 		
-		cfg.title = "Constellations";
+		cfg.title = Constellations.NAME + " " + Constellations.VERSION;
 		cfg.width = 1024;
 		cfg.height = 600;
 		cfg.backgroundFPS = 0;
 		cfg.foregroundFPS = 0;
+		cfg.forceExit = true;
 		cfg.vSyncEnabled = true;
 		cfg.useGL30 = true;
 		
-		new LwjglApplication(new ConstellationsMain(), cfg);
+		new LwjglApplication(new Constellations(), cfg);
 	}
 }
