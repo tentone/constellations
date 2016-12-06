@@ -7,10 +7,14 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.tentone.constellations.Player;
+import com.tentone.constellations.tree.QuadTree;
 
 public class World extends Rectangle
 {
 	private static final long serialVersionUID = 2597058350349965364L;
+	
+	//Quad tree
+	public QuadTree tree;
 	
 	//Planets, creatures and players
 	public ConcurrentLinkedQueue<Player> players;
@@ -29,7 +33,7 @@ public class World extends Rectangle
 		this.planets = new ConcurrentLinkedQueue<Planet>();
 		this.creatures = new ConcurrentLinkedQueue<Creature>();
 		
-		this.time = 0.0;
+		this.tree = new QuadTree(x, y, width, height);
 	}
 	
 	//Generate random world
@@ -140,6 +144,9 @@ public class World extends Rectangle
 	//Add a creature to the world
 	public void addCreature(Creature creature)
 	{
+		//TODO <CHANGE THIS>
+		this.tree.add(creature);
+		
 		creature.world = this;
 		this.creatures.add(creature);
 	}

@@ -13,10 +13,4 @@ public class Pointer extends Button
 		this.position = new Vector2(0, 0);
 		this.delta = new Vector2(0, 0);
 	}
-	
-	//Update button status
-	public void update(boolean pressed)
-	{
-		//TODO <ADD CODE HERE>
-	}
 }

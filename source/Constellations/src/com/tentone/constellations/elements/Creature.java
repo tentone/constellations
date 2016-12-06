@@ -2,8 +2,10 @@ package com.tentone.constellations.elements;
 
 import java.util.Iterator;
 
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.tentone.constellations.Player;
+import com.tentone.constellations.utils.Generator;
 
 public class Creature extends Vector2
 {
@@ -20,18 +22,22 @@ public class Creature extends Vector2
 	//Physics control
 	public Vector2 velocity;
 	
-	//Creature control
+	//Task control
 	public Task task;
-	public Vector2 target;
+	public int limit;
+	public Planet target;
+	public Vector2 destination;
 	
 	//Creature constructor
 	public Creature()
 	{
-		this.id = Element.generateID();
+		this.id = Generator.generateID();
 		this.owner = null;
 		
 		this.task = Task.Idle;
-		this.target = new Vector2(0, 0);
+		this.target = null;
+		this.limit = 0;
+		this.destination = new Vector2(0, 0);
 		
 		this.velocity = new Vector2(0, 0);
 	}
@@ -77,12 +83,14 @@ public class Creature extends Vector2
 			{
 				Creature creature = creatures.next();
 				
-				if(id != creature.id && owner != creature.owner)
+				//Check if creatures are from different owners
+				if(this.owner != creature.owner)// && this.id != creature.id)
 				{
-					if(colliding(creature))
+					if(this.colliding(creature))
 					{
-						world.creatures.remove(this);
-						world.creatures.remove(creature);
+						this.destroy();
+						creature.destroy();
+						
 						break;
 					}
 				}
@@ -92,7 +100,7 @@ public class Creature extends Vector2
 		//Add velocity to move to location
 		if(this.task != Task.Idle)
 		{
-			float distance = dst(target);
+			float distance = dst(destination);
 			
 			if(distance < 0.3f)
 			{
@@ -100,13 +108,16 @@ public class Creature extends Vector2
 			}
 			else
 			{
-				Vector2 direction = new Vector2(target.x - x, target.y - y);
+				Vector2 direction = new Vector2(destination.x - x, destination.y - y);
 				direction.nor();
 				direction.scl(0.15f);
 				
 				velocity.add(direction);
 			}
 		}
+		
+		velocity.x += MathUtils.random(-0.03f, 0.03f);
+		velocity.y += MathUtils.random(-0.03f, 0.03f);
 		
 		//Update position
 		add(velocity.x * delta, velocity.y * delta);

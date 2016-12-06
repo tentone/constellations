@@ -259,7 +259,7 @@ public class Constellations implements ApplicationListener
 				while(creatures.hasNext())
 				{
 					Creature creature = creatures.next();
-					creature.target.set(touch.getPosition(0));
+					creature.destination.set(touch.getPosition(0));
 					creature.task = Task.Move;
 					
 					//Check if clicked on some planet
@@ -267,15 +267,19 @@ public class Constellations implements ApplicationListener
 					while(itp.hasNext())
 					{
 						Planet planet = itp.next();
-						if(planet.contains(creature.target))
+						if(planet.contains(creature.destination))
 						{
+							creature.target = planet;
+							
 							if(!planet.conquered)
 							{
 								creature.task = Task.Conquer;
+								creature.limit = 1;
 							}
-							else if(planet.owner == creature.owner)
+							else if(planet.owner == creature.owner && planet.upgradable())
 							{
 								creature.task = Task.Upgrade;
+								creature.limit = planet.level + 1;
 							}
 							
 							break;
@@ -312,12 +316,11 @@ public class Constellations implements ApplicationListener
 		while(itp.hasNext())
 		{
 			Planet planet = itp.next();
-			
 
 			shape.setColor((planet.owner == null) ? Color.GRAY : planet.owner.color);
 			shape.set(ShapeType.Filled);
 			shape.circle(planet.x, planet.y, planet.life / (float) Planet.life_per_level, 32);
-			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * planet.life / planet.level, 0.2f);
+			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * (planet.life % Planet.life_per_level), 0.2f);
 			
 			shape.set(ShapeType.Line);
 			for(int i = planet.level; i <= planet.size; i++)
@@ -341,7 +344,7 @@ public class Constellations implements ApplicationListener
 		
 		//Highlight selected creatures
 		itc = selected.iterator();
-		shape.setColor(0.8f, 0.8f, 0.8f, 1f);
+		shape.setColor(0.3f, 0.3f, 0.3f, 1f);
 		while(itc.hasNext())
 		{
 			Creature creature = itc.next();
@@ -350,8 +353,8 @@ public class Constellations implements ApplicationListener
 		
 		//Draw world border
 		shape.set(ShapeType.Line);
-		shape.setColor(1f, 1f, 0f, 1f);
-		shape.rect(world.x, world.y, world.width, world.height);
+		//shape.setColor(1f, 1f, 0f, 1f);
+		//shape.rect(world.x, world.y, world.width, world.height);
 
 		//If dragging draw area
 		if(selecting)
@@ -359,6 +362,10 @@ public class Constellations implements ApplicationListener
 			shape.setColor(0f, 1f, 0f, 1f);
 			shape.circle((initial_point[0].x + actual_point[0].x) / 2f, (initial_point[0].y + actual_point[0].y) / 2f, initial_point[0].dst(actual_point[0]) / 2f, 32);
 		}
+		
+		//Debug the quad tree
+		shape.setColor(0.0f, 0.4f, 0.0f, 1f);
+		world.tree.debug(shape);
 		
 		//End shape renderer
 		shape.end();

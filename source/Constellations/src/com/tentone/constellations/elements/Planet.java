@@ -3,6 +3,7 @@ package com.tentone.constellations.elements;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.MathUtils;
 import com.tentone.constellations.Player;
+import com.tentone.constellations.utils.Generator;
 
 public class Planet extends Circle
 {	
@@ -45,7 +46,7 @@ public class Planet extends Circle
 		
 		//Identification
 		this.owner = null;
-		this.id = Element.generateID();
+		this.id = Generator.generateID();
 	}
 	
 	public Planet(int size, int level, Player owner)
@@ -59,7 +60,7 @@ public class Planet extends Circle
 		this.conquered = true;
 		
 		this.owner = owner;
-		this.id = Element.generateID();
+		this.id = Generator.generateID();
 	}
 	
 	//Update planet
@@ -87,12 +88,18 @@ public class Planet extends Circle
 		}
 	}
 	
-	//Build planet
+	//Check if planet is upgradable
+	public boolean upgradable()
+	{
+		return this.level < this.size;
+	}
+	
+	//Process creature collisions with planet
 	public void collidePlanet(Creature creature)
 	{
 		assert creature != null;
 		
-		if(creature.task == Task.Conquer && !this.conquered)
+		if(creature.task == Task.Conquer && !this.conquered && creature.target == this)
 		{
 			if(this.owner == null)
 			{
@@ -118,7 +125,7 @@ public class Planet extends Circle
 				}
 			}
 		}
-		else if(creature.task == Task.Upgrade && creature.owner == this.owner && this.level < this.size)
+		else if(creature.task == Task.Upgrade && creature.owner == this.owner && creature.limit > this.level)
 		{
 			creature.destroy();
 			this.life += life_per_creature;
