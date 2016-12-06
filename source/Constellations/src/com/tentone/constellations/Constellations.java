@@ -1,5 +1,7 @@
 package com.tentone.constellations;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -26,6 +28,9 @@ public class Constellations implements ApplicationListener
 {
 	public static final String NAME = "Constellations";
 	public static final String VERSION = "V0.0.1";
+	
+	//Performance log
+	private ArrayList<String> log = new ArrayList<String>();
 	
 	//Rendering
 	private ShapeRenderer shape;
@@ -294,6 +299,18 @@ public class Constellations implements ApplicationListener
 
 		//Update world
 		world.update(Gdx.graphics.getDeltaTime());	
+		
+		//Size
+		/*int size = world.creatures.size();
+		if(size % 10 == 0)
+		{
+			log.add(size + "|" + Gdx.graphics.getRawDeltaTime());
+		}
+		
+		if(Gdx.input.isKeyJustPressed(Keys.L))
+		{
+			exportLog("out.csv");
+		}*/
 	}
 	
 	@Override
@@ -351,10 +368,8 @@ public class Constellations implements ApplicationListener
 			shape.circle(creature.x, creature.y, 0.1f, 4);
 		}
 		
-		//Draw world border
+		//Set draw mode to line
 		shape.set(ShapeType.Line);
-		//shape.setColor(1f, 1f, 0f, 1f);
-		//shape.rect(world.x, world.y, world.width, world.height);
 
 		//If dragging draw area
 		if(selecting)
@@ -364,7 +379,7 @@ public class Constellations implements ApplicationListener
 		}
 		
 		//Debug the quad tree
-		shape.setColor(0.0f, 0.4f, 0.0f, 1f);
+		shape.setColor(0.0f, 0.2f, 0.0f, 1f);
 		world.tree.debug(shape);
 		
 		//End shape renderer
@@ -382,6 +397,27 @@ public class Constellations implements ApplicationListener
 		batch.end();
 	}
 	
+	//Export log as CSV
+	public void exportLog(String fname)
+	{
+		try
+		{
+			File file = new File(fname);
+			PrintWriter pw = new PrintWriter(file);
+			pw.println("sep=|");
+			pw.println("creatures,delta");
+			
+			Iterator<String> it = this.log.iterator();
+			while(it.hasNext())
+			{
+				pw.println(it.next().replace('"', '\''));
+			}
+			
+			pw.close();
+		}
+		catch(Exception e){}
+	}
+	
 	@Override
 	public void resize(int width, int height)
 	{
@@ -392,7 +428,7 @@ public class Constellations implements ApplicationListener
 		overlay.setAspectRatio((float)width/(float)height);
 		overlay.centerCamera();
 	}
-
+	
 	@Override
 	public void dispose()
 	{

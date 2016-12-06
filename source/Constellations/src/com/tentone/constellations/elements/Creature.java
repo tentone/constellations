@@ -5,6 +5,7 @@ import java.util.Iterator;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.tentone.constellations.Player;
+import com.tentone.constellations.tree.QuadTree;
 import com.tentone.constellations.utils.Generator;
 
 public class Creature extends Vector2
@@ -18,6 +19,9 @@ public class Creature extends Vector2
 	//Creature identification
 	public int id;
 	public Player owner;
+	
+	//Parent node inside the quad tree
+	public QuadTree parent;
 	
 	//Physics control
 	public Vector2 velocity;
@@ -33,6 +37,8 @@ public class Creature extends Vector2
 	{
 		this.id = Generator.generateID();
 		this.owner = null;
+		
+		this.parent = null;
 		
 		this.task = Task.Idle;
 		this.target = null;
@@ -124,12 +130,16 @@ public class Creature extends Vector2
 		
 		//Apply friction
 		velocity.sub(velocity.x * delta * friction, velocity.y * delta * friction);
+		
+		this.parent.update(this);
 	}
 	
 	//Destroy creature
 	public void destroy()
 	{
-		world.creatures.remove(this);
+		this.parent.remove(this);
+		
+		this.world.creatures.remove(this);
 	}
 	
 	//Check if its colliding with another creature

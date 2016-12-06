@@ -138,16 +138,16 @@ public class World extends Rectangle
 	public void addPlanet(Planet planet)
 	{
 		planet.world = this;
+		
 		this.planets.add(planet);
 	}
 	
 	//Add a creature to the world
 	public void addCreature(Creature creature)
 	{
-		//TODO <CHANGE THIS>
-		this.tree.add(creature);
-		
 		creature.world = this;
+		
+		this.tree.add(creature);
 		this.creatures.add(creature);
 	}
 	
