@@ -123,7 +123,7 @@ public class QuadTree extends Rectangle
 		}
 		
 		//Is size is less than the element limit try to aggregate
-		if(!this.isRoot() && this.parent.size() <= QuadTree.max_elements)
+		if(this.parent.size() <= QuadTree.max_elements)
 		{
 			this.parent.aggregate();
 		}
@@ -180,10 +180,6 @@ public class QuadTree extends Rectangle
 				}
 			}
 		}
-		else
-		{
-			System.err.println("Trying to divide middle node");
-		}
 	}
 	
 	//Aggregate elements and destroy children
@@ -202,10 +198,6 @@ public class QuadTree extends Rectangle
 					this.add(child[i].elements.poll());
 				}
 			}
-		}
-		else
-		{
-			System.err.println("Trying to aggregate a leaf");
 		}
 	}
 	

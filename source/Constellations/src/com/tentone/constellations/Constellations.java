@@ -52,8 +52,7 @@ public class Constellations implements ApplicationListener
 	
 	//Touch zoom and move
 	private boolean moving;
-	private float initial_zoom, initial_distance;
-	private Vector2 initial_position, initial_point;
+	private Vector2 initial_point;
 
 	//Selected creatures
 	private ArrayList<Creature> selected;
@@ -87,7 +86,6 @@ public class Constellations implements ApplicationListener
 		//Flags
 		selecting = false;
 		moving = false;
-		initial_position = new Vector2(0, 0);
 		initial_point = new Vector2(0, 0);
 		
 		//Selected creature
@@ -163,15 +161,12 @@ public class Constellations implements ApplicationListener
 		{
 			if(moving)
 			{
-				Vector2 delta = touch.getDelta(0).cpy().add(touch.getDelta(1));
-				delta.scl(0.5f);
-				
 				//Move camera
-				camera.position.x -= delta.x;
-				camera.position.y += delta.y;
+				camera.position.x -= (touch.getDelta(0).x + touch.getDelta(1).x) / 2.0f;
+				camera.position.y += (touch.getDelta(0).y + touch.getDelta(1).y) / 2.0f;
 
 				//Zoom camera
-				camera.zoom = initial_zoom - touch.getPosition(0).dst(touch.getPosition(1)) - initial_distance;
+				//camera.zoom = initial_zoom - touch.getPosition(0).dst(touch.getPosition(1)) - initial_distance;
 
 				//Update camera projection matrix
 				camera.update();
@@ -179,9 +174,8 @@ public class Constellations implements ApplicationListener
 			else
 			{
 				//Store initial camera position and zoom				
-				initial_position.set(camera.position.x, camera.position.y);
-				initial_distance = touch.getPosition(0).dst(touch.getPosition(1));
-				initial_zoom = camera.zoom;
+				//distance = touch.getPosition(0).dst(touch.getPosition(1));
+				//zoom = camera.zoom;
 				
 				//Set moving flag
 				moving = true;
@@ -219,7 +213,7 @@ public class Constellations implements ApplicationListener
 			selection.set((initial_point.x + touch.getPosition(0).x) / 2f, (initial_point.y + touch.getPosition(0).y) / 2f, initial_point.dst(touch.getPosition(0)) / 2f);
 			
 			//Only take action if selection radius is considerable
-			if(selection.radius > 0.05f)
+			if(selection.radius > 0.1f)
 			{
 				//Clear previous selection
 				selected.clear();
@@ -336,11 +330,11 @@ public class Constellations implements ApplicationListener
 		
 		//Highlight selected creatures
 		itc = selected.iterator();
-		shape.setColor(0.3f, 0.3f, 0.3f, 1f);
+		shape.setColor(0.6f, 0.6f, 0.6f, 1f);
 		while(itc.hasNext())
 		{
 			Creature creature = itc.next();
-			shape.circle(creature.x, creature.y, 0.1f, 4);
+			shape.circle(creature.x, creature.y, 0.15f, 4);
 		}
 		
 		//Set draw mode to line
