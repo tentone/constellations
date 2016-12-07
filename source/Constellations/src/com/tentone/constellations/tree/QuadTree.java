@@ -1,5 +1,6 @@
 package com.tentone.constellations.tree;
 
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -118,13 +119,13 @@ public class QuadTree extends Rectangle
 		//If does not contain the element and its not root add to parent
 		if(!removed && !this.isRoot())
 		{
-			return this.parent.remove(creature);
+			removed = this.parent.remove(creature);
 		}
 		
 		//Is size is less than the element limit try to aggregate
-		if(this.size() <= QuadTree.max_elements)
+		if(!this.isRoot() && this.parent.size() <= QuadTree.max_elements)
 		{
-			this.aggregate();
+			this.parent.aggregate();
 		}
 		
 		return removed;
@@ -188,15 +189,11 @@ public class QuadTree extends Rectangle
 	//Aggregate elements and destroy children
 	public void aggregate()
 	{
-		System.out.println("Aggregate");
-		
 		if(!this.isLeaf())
 		{
 			QuadTree[] child = this.children;
 			
 			this.children = null;
-			
-			System.out.println(this.size());
 			
 			for(int i = 0; i < child.length; i++)
 			{
@@ -238,6 +235,12 @@ public class QuadTree extends Rectangle
 	public boolean isRoot()
 	{
 		return this.parent == null;
+	}
+	
+	//Iterator to creatures
+	public Iterator<Creature> iterator()
+	{
+		return this.elements.iterator();
 	}
 	
 	//Debug the quad tree

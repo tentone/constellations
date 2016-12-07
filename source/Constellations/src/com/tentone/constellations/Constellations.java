@@ -8,6 +8,7 @@ import java.util.Iterator;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -28,6 +29,9 @@ public class Constellations implements ApplicationListener
 {
 	public static final String NAME = "Constellations";
 	public static final String VERSION = "V0.0.1";
+	
+	//Debug flags
+	private boolean debug_quad_tree = false;
 	
 	//Performance log
 	private ArrayList<String> log = new ArrayList<String>();
@@ -311,6 +315,12 @@ public class Constellations implements ApplicationListener
 		{
 			exportLog("out.csv");
 		}*/
+		
+		//Toggle quad tree debug view
+		if(Gdx.input.isKeyJustPressed(Keys.D))
+		{
+			debug_quad_tree = !debug_quad_tree;
+		}
 	}
 	
 	@Override
@@ -379,8 +389,11 @@ public class Constellations implements ApplicationListener
 		}
 		
 		//Debug the quad tree
-		shape.setColor(0.0f, 0.2f, 0.0f, 1f);
-		world.tree.debug(shape);
+		if(debug_quad_tree)
+		{
+			shape.setColor(0.0f, 0.1f, 0.0f, 1f);
+			world.tree.debug(shape);
+		}
 		
 		//End shape renderer
 		shape.end();
@@ -388,7 +401,7 @@ public class Constellations implements ApplicationListener
 		//Draw overlay
 		batch.setProjectionMatrix(overlay.combined);
 		batch.begin();
-		font.draw(batch, "Creatures (QT) " + world.tree.size(), 5f, 140f);
+		font.draw(batch, "Creatures-QT " + world.tree.size(), 5f, 140f);
 		font.draw(batch, "Selected " + selected.size(), 5f, 120f);
 		font.draw(batch, "Planets " + world.planets.size(), 5f, 100f);
 		font.draw(batch, "Creatures " + world.creatures.size(), 5f, 80f);
