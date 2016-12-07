@@ -25,9 +25,9 @@ public class World extends Rectangle
 	public double time;
 	
 	//World constructor
-	public World()
+	public World(int width, int height)
 	{
-		super(0, 0, 45, 25);
+		super(0, 0, width, height);
 		
 		this.players = new ConcurrentLinkedQueue<Player>();
 		this.planets = new ConcurrentLinkedQueue<Planet>();
@@ -37,9 +37,9 @@ public class World extends Rectangle
 	}
 	
 	//Generate random world
-	public static World generateWorld()
+	public static World generateWorld(int width, int height)
 	{
-		World world = new World();
+		World world = new World(width, height);
 		
 		Player a = new Player("a");
 		world.addPlayer(a);
@@ -52,7 +52,7 @@ public class World extends Rectangle
 		planet.setOwner(a);
 		planet.setLevel(1);
 		world.addPlanet(planet);
-		
+
 		Player b = new Player("b");
 		world.addPlayer(b);
 		
@@ -66,7 +66,7 @@ public class World extends Rectangle
 		world.addPlanet(planet);
 		
 		//Create planets
-		for(int i = 0; i < 8; i++)
+		for(int i = 0; i < 10; i++)
 		{
 			boolean colliding = true;
 			planet = null;

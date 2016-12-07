@@ -84,20 +84,23 @@ public class Creature extends Vector2
 			}
 
 			//Creature reacts to close creatures
-			Iterator<Creature> creatures = world.creatures.iterator();
-			while(creatures.hasNext())
+			if(this.parent != null)
 			{
-				Creature creature = creatures.next();
-				
-				//Check if creatures are from different owners
-				if(this.owner != creature.owner)// && this.id != creature.id)
+				Iterator<Creature> creatures = this.parent.iterator();//creatures.iterator();
+				while(creatures.hasNext())
 				{
-					if(this.colliding(creature))
+					Creature creature = creatures.next();
+					
+					//Check if creatures are from different owners
+					if(this.owner != creature.owner)// && this.id != creature.id)
 					{
-						this.destroy();
-						creature.destroy();
-						
-						break;
+						if(this.colliding(creature))
+						{
+							this.destroy();
+							creature.destroy();
+							
+							break;
+						}
 					}
 				}
 			}
@@ -131,6 +134,7 @@ public class Creature extends Vector2
 		//Apply friction
 		velocity.sub(velocity.x * delta * friction, velocity.y * delta * friction);
 		
+		//Update position inside tree
 		if(this.parent != null)
 		{
 			this.parent.update(this);
@@ -151,7 +155,7 @@ public class Creature extends Vector2
 	//Check if its colliding with another creature
 	public boolean colliding(Creature creature)
 	{
-		return dst(creature) < 0.15f;
+		return dst(creature) < 0.1f;
 	}
 	
 	//Set creature position

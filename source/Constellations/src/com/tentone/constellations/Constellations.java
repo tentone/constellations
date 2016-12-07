@@ -48,15 +48,13 @@ public class Constellations implements ApplicationListener
 	
 	//Selection control
 	private boolean selecting;
+	private Circle selection;
 	
 	//Touch zoom and move
 	private boolean moving;
-	private float initial_zoom;
-	private Vector2 initial_position;
-	
-	//Touch points
-	private Vector2[] initial_point, actual_point;
-	
+	private float initial_zoom, initial_distance;
+	private Vector2 initial_position, initial_point;
+
 	//Selected creatures
 	private ArrayList<Creature> selected;
 	
@@ -90,25 +88,17 @@ public class Constellations implements ApplicationListener
 		selecting = false;
 		moving = false;
 		initial_position = new Vector2(0, 0);
-		
-		//Points
-		initial_point = new Vector2[2];
-		actual_point = new Vector2[2];
-		
-		for(int i = 0; i < initial_point.length; i++)
-		{
-			initial_point[i] = new Vector2(0, 0);
-			actual_point[i] = new Vector2(0, 0);
-		}
+		initial_point = new Vector2(0, 0);
 		
 		//Selected creature
 		selected = new ArrayList<Creature>();
+		selection = new Circle();
 		
 		//Touch handler
 		touch = new Touch(camera);
 		
 		//Generate world
-		world = World.generateWorld();
+		world = World.generateWorld(50, 30);
 		
 		//Input processor to handle mouse scrolling
 		Gdx.input.setInputProcessor(new InputAdapter()
@@ -149,30 +139,22 @@ public class Constellations implements ApplicationListener
 		//Move camera using keys
 		if(Gdx.input.isKeyPressed(Input.Keys.ANY_KEY))
 		{
-			if(Gdx.input.isKeyPressed(Input.Keys.UP))
-			{
-				camera.position.y += 0.1f;
-				camera.update();
-			}
-			if(Gdx.input.isKeyPressed(Input.Keys.DOWN))
-			{
-				camera.position.y -= 0.1f;
-				camera.update();
-			}
-			if(Gdx.input.isKeyPressed(Input.Keys.RIGHT))
-			{
-				camera.position.x += 0.1f;
-				camera.update();
-			}
-			if(Gdx.input.isKeyPressed(Input.Keys.LEFT))
-			{
-				camera.position.x -= 0.1f;
-				camera.update();
-			}
-			
+			//Exit the game
 			if(Gdx.input.isKeyPressed(Input.Keys.ESCAPE))
 			{
 				Gdx.app.exit();
+			}
+			
+			//Export log data as a CSV
+			if(Gdx.input.isKeyJustPressed(Keys.L))
+			{
+				exportLog("out.csv");
+			}
+			
+			//Toggle quad tree debug view
+			if(Gdx.input.isKeyJustPressed(Keys.D))
+			{
+				debug_quad_tree = !debug_quad_tree;
 			}
 		}
 		
@@ -181,10 +163,6 @@ public class Constellations implements ApplicationListener
 		{
 			if(moving)
 			{
-				//Get actual point
-				actual_point[0].set(touch.getPosition(0));
-				actual_point[1].set(touch.getPosition(1));
-				
 				Vector2 delta = touch.getDelta(0).cpy().add(touch.getDelta(1));
 				delta.scl(0.5f);
 				
@@ -193,19 +171,16 @@ public class Constellations implements ApplicationListener
 				camera.position.y += delta.y;
 
 				//Zoom camera
-				camera.zoom = initial_zoom - actual_point[0].dst(actual_point[1]) - initial_point[0].dst(initial_point[1]);
+				camera.zoom = initial_zoom - touch.getPosition(0).dst(touch.getPosition(1)) - initial_distance;
 
 				//Update camera projection matrix
 				camera.update();
 			}
 			else
 			{
-				//Store initial touch points
-				initial_point[0].set(touch.getPosition(0));
-				initial_point[1].set(touch.getPosition(1));
-				
-				//Store initial camera position and zoom
+				//Store initial camera position and zoom				
 				initial_position.set(camera.position.x, camera.position.y);
+				initial_distance = touch.getPosition(0).dst(touch.getPosition(1));
 				initial_zoom = camera.zoom;
 				
 				//Set moving flag
@@ -224,16 +199,15 @@ public class Constellations implements ApplicationListener
 		//Select creatures
 		if(Gdx.input.isButtonPressed(Input.Buttons.LEFT))
 		{
-			if(selecting)
+			if(!selecting)
 			{
-				actual_point[0].set(touch.getPosition(0));
+				initial_point.set(touch.getPosition(0));
+				selection.set(0, 0, 0);
+				selecting = true;
 			}
 			else
-			{	
-				//Start selection
-				selecting = true;
-				initial_point[0].set(touch.getPosition(0));
-				actual_point[0].set(initial_point[0]);
+			{
+				selection.set((initial_point.x + touch.getPosition(0).x) / 2f, (initial_point.y + touch.getPosition(0).y) / 2f, initial_point.dst(touch.getPosition(0)) / 2f);
 			}
 		}
 		else if(selecting)
@@ -242,9 +216,10 @@ public class Constellations implements ApplicationListener
 			selecting = false;
 			
 			//Calculate selection circle
-			Circle selection = new Circle((initial_point[0].x + actual_point[0].x) / 2f, (initial_point[0].y + actual_point[0].y) / 2f, initial_point[0].dst(actual_point[0]) / 2f);
+			selection.set((initial_point.x + touch.getPosition(0).x) / 2f, (initial_point.y + touch.getPosition(0).y) / 2f, initial_point.dst(touch.getPosition(0)) / 2f);
 			
-			if(selection.radius > 0.1f)
+			//Only take action if selection radius is considerable
+			if(selection.radius > 0.05f)
 			{
 				//Clear previous selection
 				selected.clear();
@@ -302,24 +277,13 @@ public class Constellations implements ApplicationListener
 		}
 
 		//Update world
-		world.update(Gdx.graphics.getDeltaTime());	
+		world.update(0.0167f);//Gdx.graphics.getDeltaTime());	
 		
-		//Size
-		/*int size = world.creatures.size();
+		//Update performance log
+		int size = world.creatures.size();
 		if(size % 10 == 0)
 		{
-			log.add(size + "|" + Gdx.graphics.getRawDeltaTime());
-		}
-		
-		if(Gdx.input.isKeyJustPressed(Keys.L))
-		{
-			exportLog("out.csv");
-		}*/
-		
-		//Toggle quad tree debug view
-		if(Gdx.input.isKeyJustPressed(Keys.D))
-		{
-			debug_quad_tree = !debug_quad_tree;
+			log.add(size + "|" + Gdx.graphics.getDeltaTime());
 		}
 	}
 	
@@ -334,6 +298,7 @@ public class Constellations implements ApplicationListener
 		Gdx.gl.glEnable(GL20.GL_BLEND);
 		Gdx.gl.glBlendFunc(GL20.GL_ONE, GL20.GL_ONE);
 		
+		//Prepare shape renderer
 		shape.setProjectionMatrix(camera.combined);
 		shape.setAutoShapeType(true);
 		shape.begin();
@@ -385,7 +350,7 @@ public class Constellations implements ApplicationListener
 		if(selecting)
 		{
 			shape.setColor(0f, 1f, 0f, 1f);
-			shape.circle((initial_point[0].x + actual_point[0].x) / 2f, (initial_point[0].y + actual_point[0].y) / 2f, initial_point[0].dst(actual_point[0]) / 2f, 32);
+			shape.circle(selection.x, selection.y, selection.radius, 32);
 		}
 		
 		//Debug the quad tree
@@ -424,7 +389,7 @@ public class Constellations implements ApplicationListener
 			Iterator<String> it = this.log.iterator();
 			while(it.hasNext())
 			{
-				pw.println(it.next().replace('"', '\''));
+				pw.println(it.next().replace('.', ','));
 			}
 			
 			pw.close();
