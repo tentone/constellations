@@ -131,13 +131,19 @@ public class Creature extends Vector2
 		//Apply friction
 		velocity.sub(velocity.x * delta * friction, velocity.y * delta * friction);
 		
-		this.parent.update(this);
+		if(this.parent != null)
+		{
+			this.parent.update(this);
+		}
 	}
 	
 	//Destroy creature
 	public void destroy()
 	{
-		this.parent.remove(this);
+		if(this.parent != null)
+		{
+			this.parent.remove(this);
+		}
 		
 		this.world.creatures.remove(this);
 	}

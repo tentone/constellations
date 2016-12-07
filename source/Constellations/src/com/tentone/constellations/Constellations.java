@@ -388,6 +388,7 @@ public class Constellations implements ApplicationListener
 		//Draw overlay
 		batch.setProjectionMatrix(overlay.combined);
 		batch.begin();
+		font.draw(batch, "Creatures (QT) " + world.tree.size(), 5f, 140f);
 		font.draw(batch, "Selected " + selected.size(), 5f, 120f);
 		font.draw(batch, "Planets " + world.planets.size(), 5f, 100f);
 		font.draw(batch, "Creatures " + world.creatures.size(), 5f, 80f);

@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Rectangle;
 import com.tentone.constellations.elements.Creature;
+import com.tentone.constellations.utils.Generator;
 
 public class QuadTree extends Rectangle
 {
@@ -18,8 +19,10 @@ public class QuadTree extends Rectangle
 	public QuadTree parent;
 	public QuadTree children[];
 	
+	//Identification
+	public int id;
+	
 	//Creatures and planets
-	private int size;
 	public ConcurrentLinkedQueue<Creature> elements;
 	
 	//Quad Tree constructor
@@ -27,10 +30,10 @@ public class QuadTree extends Rectangle
 	{
 		super(x, y, width, height);
 
-		this.size = 0;
-		
 		this.parent = null;		
 		this.children = null;
+		
+		this.id = Generator.generateID();
 		
 		this.elements = new ConcurrentLinkedQueue<Creature>();
 	}
@@ -38,11 +41,11 @@ public class QuadTree extends Rectangle
 	public QuadTree(QuadTree parent, float x, float y, float width, float height)
 	{
 		super(x, y, width, height);
-
-		this.size = 0;
 		
 		this.parent = parent;		
 		this.children = null;
+		
+		this.id = Generator.generateID();
 		
 		this.elements = new ConcurrentLinkedQueue<Creature>();
 	}
@@ -58,10 +61,8 @@ public class QuadTree extends Rectangle
 			{
 				creature.parent = this;
 				this.elements.add(creature);
-			
-				size++;
 				
-				if(this.size == QuadTree.max_elements)
+				if(this.size() == QuadTree.max_elements + 1)
 				{
 					subdivide();
 				}
@@ -75,15 +76,7 @@ public class QuadTree extends Rectangle
 				{
 					if(this.children[i].contains(creature))
 					{
-						if(this.children[i].add(creature))
-						{
-							size++;
-							return true;
-						}
-						else
-						{
-							return false;
-						}
+						return this.children[i].add(creature);
 					}
 				}
 			}
@@ -98,26 +91,43 @@ public class QuadTree extends Rectangle
 	}
 	
 	//Remove element from quad tree
-	public void remove(Creature creature)
+	public boolean remove(Creature creature)
 	{
-		if(!this.elements.remove(creature) && this.children != null)
+		boolean removed = false;
+		
+		creature.parent = null;
+		
+		//Try to remove from this node
+		if(this.elements.remove(creature))
+		{
+			removed = true;
+		}
+		//If its not leaf remove from children
+		else if(this.isLeaf())
 		{
 			for(int i = 0; i < this.children.length; i++)
 			{
-				if(this.children[i].contains(creature))
+				if(this.children[i].remove(creature))
 				{
-					this.children[i].remove(creature);
+					removed = true;
 					break;
 				}
 			}
 		}
 		
-		size--;
-		
-		if(this.size == QuadTree.max_elements)
+		//If does not contain the element and its not root add to parent
+		if(!removed && !this.isRoot())
 		{
-			aggregate();
+			return this.parent.remove(creature);
 		}
+		
+		//Is size is less than the element limit try to aggregate
+		if(this.size() <= QuadTree.max_elements)
+		{
+			this.aggregate();
+		}
+		
+		return removed;
 	}
 	
 	//Update creature location in the tree (should be called by the node containing this creature)
@@ -127,17 +137,16 @@ public class QuadTree extends Rectangle
 		if(!this.contains(creature))
 		{
 			//Remove creature from elements and move it to a different branch
-			this.elements.remove(creature);
+			this.remove(creature);
 			
 			//Add to parent
-			this.parent.add(creature);
+			this.add(creature);
 		}
 	}
 	
 	//Clear the quad tree
 	public void clear()
 	{
-		this.size = 0;
 		this.children = null;
 		this.elements.clear();
 	}
@@ -145,7 +154,7 @@ public class QuadTree extends Rectangle
 	//Subdivide quad tree leaf
 	public void subdivide()
 	{
-		if(isLeaf())
+		if(this.isLeaf())
 		{
 			float width = this.width / 2f;
 			float height = this.height / 2f;
@@ -179,19 +188,21 @@ public class QuadTree extends Rectangle
 	//Aggregate elements and destroy children
 	public void aggregate()
 	{
-		if(!isLeaf())
+		System.out.println("Aggregate");
+		
+		if(!this.isLeaf())
 		{
 			QuadTree[] child = this.children;
 			
 			this.children = null;
-			this.size = 0;
+			
+			System.out.println(this.size());
 			
 			for(int i = 0; i < child.length; i++)
 			{
 				while(!child[i].elements.isEmpty())
 				{
 					this.add(child[i].elements.poll());
-					break;
 				}
 			}
 		}
@@ -204,6 +215,16 @@ public class QuadTree extends Rectangle
 	//Get size
 	public int size()
 	{
+		int size = this.elements.size();
+		
+		if(!this.isLeaf())
+		{
+			for(int i = 0; i < this.children.length; i++)
+			{
+				size += this.children[i].size();
+			}
+		}
+		
 		return size;
 	}
 	
@@ -230,7 +251,7 @@ public class QuadTree extends Rectangle
 		shape.setColor((float)this.elements.size()/(float)QuadTree.max_elements, 0.0f, 0.0f, 0.1f);
 		shape.rect(x, y, width, height);
 		
-		if(this.children != null)
+		if(!this.isLeaf())
 		{
 			for(int i = 0; i < 4; i++)
 			{

@@ -110,6 +110,7 @@ public class Planet extends Circle
 			{
 				creature.destroy();
 				this.life += life_per_creature;
+				
 				if(this.life >= life_per_level)
 				{
 					this.conquered = true;
@@ -119,6 +120,7 @@ public class Planet extends Circle
 			{
 				creature.destroy();
 				this.life -= life_per_creature;
+				
 				if(this.life <= 0)
 				{
 					this.reset();
@@ -139,6 +141,7 @@ public class Planet extends Circle
 		{
 			creature.destroy();
 			this.life -= life_per_creature;
+			
 			if(this.life <= 0)
 			{
 				this.reset();
