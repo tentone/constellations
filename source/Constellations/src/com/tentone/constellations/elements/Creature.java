@@ -4,7 +4,6 @@ import java.util.Iterator;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.tentone.constellations.Player;
 import com.tentone.constellations.tree.QuadTree;
 import com.tentone.constellations.utils.Generator;
 

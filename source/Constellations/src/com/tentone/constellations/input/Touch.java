@@ -53,9 +53,21 @@ public class Touch
 	}
 	
 	//Check is a pointer is pressed
+	public boolean justReleased(int pointer)
+	{
+		return pointers[pointer].just_released;
+	}
+	
+	//Check is a pointer is pressed
+	public boolean justPressed(int pointer)
+	{
+		return pointers[pointer].just_pressed;
+	}
+	
+	//Check is a pointer is pressed
 	public boolean isPressed(int pointer)
 	{
-		return false;
+		return pointers[pointer].pressed;
 	}
 	
 	//Update input

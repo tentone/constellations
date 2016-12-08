@@ -1,4 +1,4 @@
-package com.tentone.constellations;
+package com.tentone.constellations.elements;
 
 import com.badlogic.gdx.graphics.Color;
 import com.tentone.constellations.utils.Generator;

@@ -29,12 +29,15 @@ public class Constellations implements ApplicationListener
 {
 	public static final String NAME = "Constellations";
 	public static final String VERSION = "V0.0.1";
+	public static final String TIMESTAMP = "201612081110";
 	
 	//Debug flags
 	private boolean debug_quad_tree = false;
+	private boolean debug_overlay = true;
 	
 	//Performance log
 	private ArrayList<String> log = new ArrayList<String>();
+	private float log_time;
 	
 	//Rendering
 	private ShapeRenderer shape;
@@ -46,14 +49,11 @@ public class Constellations implements ApplicationListener
 	//Camera
 	private OrthographicCamera camera, overlay;
 	
-	//Selection control
-	private boolean selecting;
+	//Selection and move control flags
+	private boolean selecting, moving;
 	private Vector2 initial_point;
 	private Circle selection;
 	
-	//Touch zoom and move
-	private boolean moving;
-
 	//Selected creatures
 	private ArrayList<Creature> selected;
 	
@@ -154,6 +154,12 @@ public class Constellations implements ApplicationListener
 			{
 				debug_quad_tree = !debug_quad_tree;
 			}
+			
+			//Toggle debug overlay
+			if(Gdx.input.isKeyJustPressed(Keys.O))
+			{
+				debug_overlay = !debug_overlay;
+			}
 		}
 		
 		//Dual touch events
@@ -175,11 +181,7 @@ public class Constellations implements ApplicationListener
 				camera.update();
 			}
 			else
-			{
-				//Store initial camera position and zoom				
-				//distance = touch.getPosition(0).dst(touch.getPosition(1));
-				//zoom = camera.zoom;
-				
+			{				
 				//Set moving flag
 				moving = true;
 			}
@@ -257,10 +259,18 @@ public class Constellations implements ApplicationListener
 								creature.task = Task.Conquer;
 								creature.limit = 1;
 							}
-							else if(planet.owner == creature.owner && planet.upgradable())
+							else if(planet.owner == creature.owner)
 							{
-								creature.task = Task.Upgrade;
-								creature.limit = planet.level + 1;
+								if(planet.damaged())
+								{
+									creature.task = Task.Heal;
+									creature.limit = planet.level;
+								}
+								else if(planet.upgradable())
+								{
+									creature.task = Task.Upgrade;
+									creature.limit = planet.level + 1;
+								}
 							}
 							
 							break;
@@ -273,14 +283,18 @@ public class Constellations implements ApplicationListener
 			}
 		}
 
+		float delta = Gdx.graphics.getDeltaTime();
+		
 		//Update world
-		world.update(0.0167f);//Gdx.graphics.getDeltaTime());	
+		world.update(delta);	
 		
 		//Update performance log
-		int size = world.creatures.size();
-		if(size % 10 == 0)
+		log_time += delta;
+		
+		if(log_time > 0.5f)
 		{
-			log.add(size + "|" + Gdx.graphics.getDeltaTime());
+			log_time = 0f;
+			log.add(world.creatures.size() + "|" + Gdx.graphics.getDeltaTime());
 		}
 	}
 	
@@ -360,17 +374,23 @@ public class Constellations implements ApplicationListener
 		//End shape renderer
 		shape.end();
 		
-		//Draw overlay
-		batch.setProjectionMatrix(overlay.combined);
-		batch.begin();
-		font.draw(batch, "Creatures-QT " + world.tree.size(), 5f, 140f);
-		font.draw(batch, "Selected " + selected.size(), 5f, 120f);
-		font.draw(batch, "Planets " + world.planets.size(), 5f, 100f);
-		font.draw(batch, "Creatures " + world.creatures.size(), 5f, 80f);
-		font.draw(batch, "FPS " + Gdx.graphics.getFramesPerSecond(), 5f, 60f);
-		font.draw(batch, "Screen Mode " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight(), 5f, 40f);
-		font.draw(batch, NAME + " " + VERSION, 5f, 20f);
-		batch.end();
+		//Debug overlay
+		if(debug_overlay)
+		{
+			batch.setProjectionMatrix(overlay.combined);
+			batch.begin();
+			font.draw(batch, "Quad-Tree", 5f, 180f);
+			font.draw(batch, "Consistent " + (world.tree.size() == world.creatures.size()), 5f, 160f);
+			font.draw(batch, "Quad-Tree " + world.tree.size(), 5f, 140f);
+			font.draw(batch, "Linked-Queue " + world.creatures.size(), 5f, 120f);
+			
+			font.draw(batch, "Selected " + selected.size(), 5f, 100f);
+			font.draw(batch, "Planets " + world.planets.size(), 5f, 80f);
+			font.draw(batch, "FPS " + Gdx.graphics.getFramesPerSecond(), 5f, 60f);
+			font.draw(batch, "Screen Mode " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight(), 5f, 40f);
+			font.draw(batch, NAME + " " + VERSION + "(" + TIMESTAMP + ")", 5f, 20f);
+			batch.end();
+		}
 	}
 	
 	//Export log as CSV

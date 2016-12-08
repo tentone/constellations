@@ -96,11 +96,12 @@ public class QuadTree extends Rectangle
 	{
 		boolean removed = false;
 		
-		creature.parent = null;
+		
 		
 		//Try to remove from this node
 		if(this.elements.remove(creature))
 		{
+			creature.parent = null;
 			removed = true;
 		}
 		//If its not leaf remove from children
@@ -109,7 +110,7 @@ public class QuadTree extends Rectangle
 			for(int i = 0; i < this.children.length; i++)
 			{
 				if(this.children[i].remove(creature))
-				{
+				{					
 					removed = true;
 					break;
 				}
@@ -229,10 +230,16 @@ public class QuadTree extends Rectangle
 		return this.parent == null;
 	}
 	
-	//Iterator to creatures
+	//Iterator to creatures attached to this node
 	public Iterator<Creature> iterator()
 	{
 		return this.elements.iterator();
+	}
+	
+	//Iterator to all creatures attached to this node and its children
+	public Iterator<Creature> globalIterator()
+	{
+		return new QuadTreeIterator(this);
 	}
 	
 	//Debug the quad tree
@@ -252,6 +259,58 @@ public class QuadTree extends Rectangle
 			{
 				this.children[i].debug(shape);
 			}
+		}
+	}
+	
+	private class QuadTreeIterator implements Iterator<Creature>
+	{ 
+		public ConcurrentLinkedQueue<Iterator<Creature>> list;
+		public Iterator<Iterator<Creature>> iterator;
+		public Iterator<Creature> actual;
+		
+		public QuadTreeIterator(QuadTree root)
+		{
+			this.list = new ConcurrentLinkedQueue<Iterator<Creature>>();
+			this.getIterators(root);
+			
+			this.iterator = this.list.iterator();
+			this.actual = this.iterator.hasNext() ? this.iterator.next() : root.elements.iterator();
+		} 
+		
+		//Get iterators for all leafs in the three
+		public void getIterators(QuadTree node)
+		{
+			if(node.elements.size() > 0)
+			{
+				list.add(node.elements.iterator());
+			}
+			
+			if(node.children != null)
+			{
+				for(int i = 0; i < node.children.length; i++)
+				{
+					getIterators(node.children[i]);
+				}
+			}
+		}
+		
+		//Returns if there is next element
+		public boolean hasNext()
+		{
+			return actual.hasNext() || iterator.hasNext();
+		}
+		
+		//Get next element
+		public Creature next()
+		{ 
+			Creature elem = actual.next();
+			
+			if(!actual.hasNext() && iterator.hasNext())
+			{
+				actual = iterator.next();
+			}
+			
+			return elem;
 		}
 	}
 }

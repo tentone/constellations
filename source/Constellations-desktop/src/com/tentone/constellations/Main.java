@@ -16,7 +16,7 @@ public class Main
 		cfg.foregroundFPS = 0;
 		cfg.forceExit = true;
 		cfg.vSyncEnabled = true;
-		cfg.useGL30 = true;
+		cfg.useGL30 = false;
 		
 		new LwjglApplication(new Constellations(), cfg);
 	}

@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
-import com.tentone.constellations.Player;
 import com.tentone.constellations.tree.QuadTree;
 
 public class World extends Rectangle

@@ -2,7 +2,6 @@ package com.tentone.constellations.elements;
 
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.MathUtils;
-import com.tentone.constellations.Player;
 import com.tentone.constellations.utils.Generator;
 
 public class Planet extends Circle
@@ -10,7 +9,7 @@ public class Planet extends Circle
 	private static final long serialVersionUID = 2799808330666229595L;
 	
 	//Constants
-	public static final float spawn_time = 0.5f;
+	public static final float spawn_time = 0.01f;
 	public static final int life_per_level = 100;
 	public static final int life_per_creature = 2;
 	
@@ -94,6 +93,12 @@ public class Planet extends Circle
 		return this.level < this.size;
 	}
 	
+	//Check if this planet is damaged
+	public boolean damaged()
+	{
+		return this.life < this.level * Planet.life_per_level;
+	}
+	
 	//Process creature collisions with planet
 	public void collidePlanet(Creature creature)
 	{
@@ -105,7 +110,7 @@ public class Planet extends Circle
 			{
 				this.owner = creature.owner;
 			}
-	
+			
 			if(creature.owner == this.owner)
 			{
 				creature.destroy();
@@ -117,7 +122,7 @@ public class Planet extends Circle
 				}
 			}
 			else
-			{
+			{				
 				creature.destroy();
 				this.life -= life_per_creature;
 				
@@ -127,14 +132,22 @@ public class Planet extends Circle
 				}
 			}
 		}
-		else if(creature.task == Task.Upgrade && creature.owner == this.owner && creature.limit > this.level)
+		else if(creature.owner == this.owner)
 		{
-			creature.destroy();
-			this.life += life_per_creature;
-			
-			if(this.life >= (this.level + 1) * life_per_level)
+			if(creature.task == Task.Upgrade && creature.limit > this.level)
 			{
-				this.level++;
+				creature.destroy();
+				this.life += life_per_creature;
+				
+				if(this.life >= (this.level + 1) * life_per_level)
+				{
+					this.level++;
+				}
+			}
+			else if(creature.task == Task.Heal && this.damaged())
+			{
+				creature.destroy();
+				this.life += life_per_creature;
 			}
 		}
 		else if(this.owner != creature.owner && this.owner != null)
