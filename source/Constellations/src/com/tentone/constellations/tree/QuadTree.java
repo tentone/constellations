@@ -14,7 +14,7 @@ public class QuadTree extends Rectangle
 	private static final long serialVersionUID = 6162394780903176025L;
 
 	//Max elements per node before subdivision
-	public static final int max_elements = 10;
+	public static final int max_elements = 6;
 
 	//Parent and children pointer
 	public QuadTree parent;
@@ -123,7 +123,7 @@ public class QuadTree extends Rectangle
 		}
 		
 		//Is size is less than the element limit try to aggregate
-		if(this.parent.size() <= QuadTree.max_elements)
+		if(!this.isRoot() && this.parent.size() <= QuadTree.max_elements)
 		{
 			this.parent.aggregate();
 		}

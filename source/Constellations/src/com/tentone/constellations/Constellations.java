@@ -48,11 +48,11 @@ public class Constellations implements ApplicationListener
 	
 	//Selection control
 	private boolean selecting;
+	private Vector2 initial_point;
 	private Circle selection;
 	
 	//Touch zoom and move
 	private boolean moving;
-	private Vector2 initial_point;
 
 	//Selected creatures
 	private ArrayList<Creature> selected;
@@ -166,8 +166,11 @@ public class Constellations implements ApplicationListener
 				camera.position.y += (touch.getDelta(0).y + touch.getDelta(1).y) / 2.0f;
 
 				//Zoom camera
-				//camera.zoom = initial_zoom - touch.getPosition(0).dst(touch.getPosition(1)) - initial_distance;
-
+				Vector2 last_a = touch.getPosition(0).cpy().sub(touch.getDelta(0));
+				Vector2 last_b = touch.getPosition(1).cpy().sub(touch.getDelta(1));
+				
+				camera.zoom -= touch.getPosition(0).dst(touch.getPosition(1)) - last_a.dst(last_b);
+				
 				//Update camera projection matrix
 				camera.update();
 			}
@@ -405,6 +408,9 @@ public class Constellations implements ApplicationListener
 	@Override
 	public void dispose()
 	{
+		
+		font.dispose();
+		batch.dispose();
 		shape.dispose();
 	}
 	

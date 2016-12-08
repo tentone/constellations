@@ -86,20 +86,19 @@ public class Creature extends Vector2
 			//Creature reacts to close creatures
 			if(this.parent != null)
 			{
-				Iterator<Creature> creatures = this.parent.iterator();//creatures.iterator();
+				Iterator<Creature> creatures = this.parent.iterator();
 				while(creatures.hasNext())
 				{
 					Creature creature = creatures.next();
 					
 					//Check if creatures are from different owners
-					if(this.owner != creature.owner)// && this.id != creature.id)
+					if(this.owner != creature.owner)
 					{
 						if(this.colliding(creature))
 						{
 							this.destroy();
 							creature.destroy();
-							
-							break;
+							return;
 						}
 					}
 				}
