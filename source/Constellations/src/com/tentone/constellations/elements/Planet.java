@@ -9,7 +9,7 @@ public class Planet extends Circle
 	private static final long serialVersionUID = 2799808330666229595L;
 	
 	//Constants
-	public static final float spawn_time = 0.01f;
+	public static final float spawn_time = 0.001f;
 	public static final int life_per_level = 100;
 	public static final int life_per_creature = 2;
 	

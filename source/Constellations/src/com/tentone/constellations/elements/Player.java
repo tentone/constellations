@@ -9,18 +9,18 @@ public class Player
 	public Color color;
 	public int id;
 	
-	//Player constructor
-	public Player(String name, Integer id, Color color)
-	{
-		this.name = name;
-		this.id = (id != null) ? id : Generator.generateID();
-		this.color = (color != null) ? color : Generator.generateColor();
-	}
-	
+	//Constructor
 	public Player(String name)
 	{
 		this.name = name;
 		this.id = Generator.generateID();
 		this.color = Generator.generateColor();
+	}
+	
+	public Player(String name, Integer id, Color color)
+	{
+		this.name = name;
+		this.id = (id != null) ? id : Generator.generateID();
+		this.color = (color != null) ? color : Generator.generateColor();
 	}
 }

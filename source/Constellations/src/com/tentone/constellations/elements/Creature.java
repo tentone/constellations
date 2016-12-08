@@ -85,7 +85,7 @@ public class Creature extends Vector2
 			//Creature reacts to close creatures
 			if(this.parent != null)
 			{
-				Iterator<Creature> creatures = this.parent.iterator();
+				Iterator<Creature> creatures = this.parent.elements.iterator();
 				while(creatures.hasNext())
 				{
 					Creature creature = creatures.next();
@@ -146,8 +146,6 @@ public class Creature extends Vector2
 		{
 			this.parent.remove(this);
 		}
-		
-		this.world.creatures.remove(this);
 	}
 	
 	//Check if its colliding with another creature
@@ -161,5 +159,53 @@ public class Creature extends Vector2
 	{
 		this.x = x;
 		this.y = y;
+	}
+	
+	//Create string with debug information
+	@Override
+	public String toString()
+	{
+		String str = "ID: " + id + " Position:" + x + "," + y;
+		QuadTree tree = parent;
+		
+		while(tree != null)
+		{
+			str += "\n    " + tree.id;
+			
+			if(tree.isRoot())
+			{
+				str += " Root";
+			}
+			else if(tree.isLeaf())
+			{
+				str += " Leaf";
+			}
+			else if(tree.parent.isLeaf())
+			{
+				str += " Parent is Leaf";
+			}
+			else
+			{
+				boolean found = false;
+				
+				for(int i = 0; i < tree.parent.children.length; i++)
+				{
+					if(tree.parent.children[i] == tree)
+					{
+						found = true;
+						break;
+					}
+				}
+				
+				if(!found)	
+				{
+					str += " No down path";
+				}
+			}
+			
+			tree = tree.parent;
+		}
+		
+		return str;
 	}
 }

@@ -2,15 +2,15 @@ package com.tentone.constellations;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -36,7 +36,7 @@ public class Constellations implements ApplicationListener
 	private boolean debug_overlay = true;
 	
 	//Performance log
-	private ArrayList<String> log = new ArrayList<String>();
+	private LinkedList<String> log = new LinkedList<String>();
 	private float log_time;
 	
 	//Rendering
@@ -55,7 +55,7 @@ public class Constellations implements ApplicationListener
 	private Circle selection;
 	
 	//Selected creatures
-	private ArrayList<Creature> selected;
+	private ConcurrentLinkedQueue<Creature> selected;
 	
 	//World
 	private World world;
@@ -89,13 +89,13 @@ public class Constellations implements ApplicationListener
 		initial_point = new Vector2(0, 0);
 		
 		//Selected creature
-		selected = new ArrayList<Creature>();
+		selected = new ConcurrentLinkedQueue<Creature>();
 		selection = new Circle();
 		
 		//Touch handler
 		touch = new Touch(camera);
 		
-		//Generate world
+		//Generate world        
 		world = World.generateWorld(50, 30);
 		
 		//Input processor to handle mouse scrolling
@@ -224,7 +224,7 @@ public class Constellations implements ApplicationListener
 				selected.clear();
 				
 				//Select creatures
-				Iterator<Creature> creatures = world.creatures.iterator();
+				Iterator<Creature> creatures = world.tree.iterator();
 				while(creatures.hasNext())
 				{
 					Creature creature = creatures.next();
@@ -294,7 +294,7 @@ public class Constellations implements ApplicationListener
 		if(log_time > 0.5f)
 		{
 			log_time = 0f;
-			log.add(world.creatures.size() + "|" + Gdx.graphics.getDeltaTime());
+			log.add(world.tree.size() + "|" + Gdx.graphics.getDeltaTime());
 		}
 	}
 	
@@ -314,43 +314,14 @@ public class Constellations implements ApplicationListener
 		shape.setAutoShapeType(true);
 		shape.begin();
 
-		//Draw planets
-		Iterator<Planet> itp = world.planets.iterator();
-		while(itp.hasNext())
-		{
-			Planet planet = itp.next();
-
-			shape.setColor((planet.owner == null) ? Color.GRAY : planet.owner.color);
-			shape.set(ShapeType.Filled);
-			shape.circle(planet.x, planet.y, planet.life / (float) Planet.life_per_level, 32);
-			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * (planet.life % Planet.life_per_level), 0.2f);
-			
-			shape.set(ShapeType.Line);
-			for(int i = planet.level; i <= planet.size; i++)
-			{
-				shape.circle(planet.x, planet.y, i, 32);
-			}
-			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 1.5f, 0.2f);
-		}
-				
-		shape.set(ShapeType.Filled);
-		
-		//Draw creatures
-		Iterator<Creature> itc = world.creatures.iterator();
-		while(itc.hasNext())
-		{
-			Creature creature = itc.next();
-			
-			shape.setColor(creature.owner != null ? creature.owner.color : Color.GRAY);
-			shape.circle(creature.x, creature.y, 0.1f, 4);
-		}
+		world.draw(shape);
 		
 		//Highlight selected creatures
-		itc = selected.iterator();
+		Iterator<Creature> its = selected.iterator();
 		shape.setColor(0.6f, 0.6f, 0.6f, 1f);
-		while(itc.hasNext())
+		while(its.hasNext())
 		{
-			Creature creature = itc.next();
+			Creature creature = its.next();
 			shape.circle(creature.x, creature.y, 0.15f, 4);
 		}
 		
@@ -379,11 +350,8 @@ public class Constellations implements ApplicationListener
 		{
 			batch.setProjectionMatrix(overlay.combined);
 			batch.begin();
-			font.draw(batch, "Quad-Tree", 5f, 180f);
-			font.draw(batch, "Consistent " + (world.tree.size() == world.creatures.size()), 5f, 160f);
-			font.draw(batch, "Quad-Tree " + world.tree.size(), 5f, 140f);
-			font.draw(batch, "Linked-Queue " + world.creatures.size(), 5f, 120f);
-			
+
+			font.draw(batch, "Creatures " + world.tree.size(), 5f, 120f);
 			font.draw(batch, "Selected " + selected.size(), 5f, 100f);
 			font.draw(batch, "Planets " + world.planets.size(), 5f, 80f);
 			font.draw(batch, "FPS " + Gdx.graphics.getFramesPerSecond(), 5f, 60f);
@@ -428,7 +396,6 @@ public class Constellations implements ApplicationListener
 	@Override
 	public void dispose()
 	{
-		
 		font.dispose();
 		batch.dispose();
 		shape.dispose();

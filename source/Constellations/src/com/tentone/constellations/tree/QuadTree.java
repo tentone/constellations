@@ -13,16 +13,16 @@ public class QuadTree extends Rectangle
 {
 	private static final long serialVersionUID = 6162394780903176025L;
 
-	//Max elements per node before subdivision
-	public static final int max_elements = 6;
-
 	//Parent and children pointer
 	public QuadTree parent;
 	public QuadTree children[];
 	
+	//Max elements per node before subdivision
+	public final int max_elements = 8;
+	
 	//Identification
 	public int id;
-	
+
 	//Creatures and planets
 	public ConcurrentLinkedQueue<Creature> elements;
 	
@@ -43,7 +43,7 @@ public class QuadTree extends Rectangle
 	{
 		super(x, y, width, height);
 		
-		this.parent = parent;		
+		this.parent = parent;
 		this.children = null;
 		
 		this.id = Generator.generateID();
@@ -52,7 +52,7 @@ public class QuadTree extends Rectangle
 	}
 	
 	//Add element to quad tree
-	public boolean add(Creature creature)
+	public synchronized boolean add(Creature creature)
 	{
 		//Check if element is inside this node
 		if(this.contains(creature))
@@ -61,11 +61,12 @@ public class QuadTree extends Rectangle
 			if(this.isLeaf())
 			{
 				creature.parent = this;
+				
 				this.elements.add(creature);
 				
-				if(this.size() == QuadTree.max_elements + 1)
+				if(this.size() > this.max_elements)
 				{
-					subdivide();
+					this.subdivide();
 				}
 				
 				return true;
@@ -92,15 +93,13 @@ public class QuadTree extends Rectangle
 	}
 	
 	//Remove element from quad tree
-	public boolean remove(Creature creature)
+	public synchronized boolean remove(Creature creature)
 	{
 		boolean removed = false;
-		
-		
-		
+
 		//Try to remove from this node
 		if(this.elements.remove(creature))
-		{
+		{	
 			creature.parent = null;
 			removed = true;
 		}
@@ -117,31 +116,34 @@ public class QuadTree extends Rectangle
 			}
 		}
 		
-		//If does not contain the element and its not root add to parent
-		if(!removed && !this.isRoot())
+		//If its not root
+		if(!this.isRoot())
 		{
-			removed = this.parent.remove(creature);
-		}
-		
-		//Is size is less than the element limit try to aggregate
-		if(!this.isRoot() && this.parent.size() <= QuadTree.max_elements)
-		{
-			this.parent.aggregate();
+			//If does not contain the element add to parent
+			if(!removed)
+			{
+				removed = this.parent.remove(creature);
+			}
+			
+			//Is size is less than the element limit try to aggregate
+			if(this.parent.size() <= this.max_elements)
+			{
+				this.parent.aggregate();
+			}
 		}
 		
 		return removed;
 	}
 	
 	//Update creature location in the tree (should be called by the node containing this creature)
-	public void update(Creature creature)
+	public synchronized void update(Creature creature)
 	{
 		//Check if creature is still inside this node
 		if(!this.contains(creature))
 		{
-			//Remove creature from elements and move it to a different branch
+			//Remove creature from elements and move it to a different
 			this.remove(creature);
-			
-			//Add to parent
+
 			this.add(creature);
 		}
 	}
@@ -149,12 +151,12 @@ public class QuadTree extends Rectangle
 	//Clear the quad tree
 	public void clear()
 	{
-		this.children = null;
 		this.elements.clear();
+		this.children = null;
 	}
 	
 	//Subdivide quad tree leaf
-	public void subdivide()
+	public synchronized void subdivide()
 	{
 		if(this.isLeaf())
 		{
@@ -184,7 +186,7 @@ public class QuadTree extends Rectangle
 	}
 	
 	//Aggregate elements and destroy children
-	public void aggregate()
+	public synchronized void aggregate()
 	{
 		if(!this.isLeaf())
 		{
@@ -194,10 +196,43 @@ public class QuadTree extends Rectangle
 			
 			for(int i = 0; i < child.length; i++)
 			{
+				child[i].aggregate();
+				
 				while(!child[i].elements.isEmpty())
 				{
 					this.add(child[i].elements.poll());
 				}
+			}
+		}
+	}
+	
+	//Get linked list
+	public ConcurrentLinkedQueue<Creature> toLinkedList()
+	{
+		ConcurrentLinkedQueue<Creature> list = new ConcurrentLinkedQueue<Creature>();
+		
+		fillLinkedList(this, list);
+		
+		return list;
+	}
+	
+	//Fill a linked list with data from a quad tree
+	public static void fillLinkedList(QuadTree node, ConcurrentLinkedQueue<Creature> list)
+	{
+		if(node.elements.size() > 0)
+		{
+			Iterator<Creature> it = node.elements.iterator();
+			while(it.hasNext())
+			{
+				list.add(it.next());
+			}
+		}
+		
+		if(node.children != null)
+		{
+			for(int i = 0; i < node.children.length; i++)
+			{
+				fillLinkedList(node.children[i], list);
 			}
 		}
 	}
@@ -229,15 +264,9 @@ public class QuadTree extends Rectangle
 	{
 		return this.parent == null;
 	}
-	
-	//Iterator to creatures attached to this node
-	public Iterator<Creature> iterator()
-	{
-		return this.elements.iterator();
-	}
-	
+
 	//Iterator to all creatures attached to this node and its children
-	public Iterator<Creature> globalIterator()
+	public Iterator<Creature> iterator()
 	{
 		return new QuadTreeIterator(this);
 	}
@@ -250,67 +279,15 @@ public class QuadTree extends Rectangle
 		shape.rect(x, y, width, height);
 		
 		shape.set(ShapeType.Filled);
-		shape.setColor((float)this.elements.size()/(float)QuadTree.max_elements, 0.0f, 0.0f, 0.1f);
+		shape.setColor((float)this.elements.size()/(float)this.max_elements, 0.0f, 0.0f, 0.1f);
 		shape.rect(x, y, width, height);
 		
 		if(!this.isLeaf())
 		{
-			for(int i = 0; i < 4; i++)
+			for(int i = 0; i < this.children.length; i++)
 			{
 				this.children[i].debug(shape);
 			}
-		}
-	}
-	
-	private class QuadTreeIterator implements Iterator<Creature>
-	{ 
-		public ConcurrentLinkedQueue<Iterator<Creature>> list;
-		public Iterator<Iterator<Creature>> iterator;
-		public Iterator<Creature> actual;
-		
-		public QuadTreeIterator(QuadTree root)
-		{
-			this.list = new ConcurrentLinkedQueue<Iterator<Creature>>();
-			this.getIterators(root);
-			
-			this.iterator = this.list.iterator();
-			this.actual = this.iterator.hasNext() ? this.iterator.next() : root.elements.iterator();
-		} 
-		
-		//Get iterators for all leafs in the three
-		public void getIterators(QuadTree node)
-		{
-			if(node.elements.size() > 0)
-			{
-				list.add(node.elements.iterator());
-			}
-			
-			if(node.children != null)
-			{
-				for(int i = 0; i < node.children.length; i++)
-				{
-					getIterators(node.children[i]);
-				}
-			}
-		}
-		
-		//Returns if there is next element
-		public boolean hasNext()
-		{
-			return actual.hasNext() || iterator.hasNext();
-		}
-		
-		//Get next element
-		public Creature next()
-		{ 
-			Creature elem = actual.next();
-			
-			if(!actual.hasNext() && iterator.hasNext())
-			{
-				actual = iterator.next();
-			}
-			
-			return elem;
 		}
 	}
 }
