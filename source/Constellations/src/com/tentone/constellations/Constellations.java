@@ -18,22 +18,22 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
-import com.tentone.constellations.camera.OrthographicCamera;
-import com.tentone.constellations.elements.Creature;
-import com.tentone.constellations.elements.Planet;
-import com.tentone.constellations.elements.Task;
-import com.tentone.constellations.elements.World;
+import com.tentone.constellations.graphics.OrthographicCamera;
 import com.tentone.constellations.input.Touch;
+import com.tentone.constellations.object.Creature;
+import com.tentone.constellations.object.Planet;
+import com.tentone.constellations.object.Task;
+import com.tentone.constellations.object.World;
 
 public class Constellations implements ApplicationListener
 {
 	//Program meta data
 	public static final String NAME = "Constellations";
 	public static final String VERSION = "V0.0.1";
-	public static final String TIMESTAMP = "201612081110";
+	public static final String TIMESTAMP = "201612090133";
 	
 	//Available CPU's
-	public static final int cpu = Runtime.getRuntime().availableProcessors();
+	public static final int avaiable_processors = Runtime.getRuntime().availableProcessors();
 	
 	//Debug flags
 	private boolean debug_quad_tree = false;
@@ -85,7 +85,7 @@ public class Constellations implements ApplicationListener
 		camera = new OrthographicCamera(1, width / height, width);
 		camera.zoom = 20f;
 		
-		overlay = new OrthographicCamera(500, width / height, width);
+		overlay = new OrthographicCamera(650, width / height, width);
 		
 		//Flags
 		selecting = false;
@@ -100,7 +100,7 @@ public class Constellations implements ApplicationListener
 		touch = new Touch(camera);
 		
 		//Generate world        
-		world = World.generateWorld(50, 30);
+		world = World.generateWorld(50, 20);
 		
 		//Input processor to handle mouse scrolling
 		Gdx.input.setInputProcessor(new InputAdapter()
@@ -292,7 +292,7 @@ public class Constellations implements ApplicationListener
 		
 		//Update performance log
 		log_time += delta;
-		if(log_time > 0.05f)
+		if(log_time > 0.1f)
 		{
 			log_time = 0f;
 			log.add(world.tree.size() + "|" + delta);
@@ -345,14 +345,14 @@ public class Constellations implements ApplicationListener
 		{
 			batch.setProjectionMatrix(overlay.combined);
 			batch.begin();
-
-			font.draw(batch, "CPU " + cpu, 5f, 140f);
+			font.draw(batch, NAME + " " + VERSION + "(" + TIMESTAMP + ")", 5f, 160f);
+			font.draw(batch, "Processors " + avaiable_processors, 5f, 140f);
 			font.draw(batch, "Creatures " + world.tree.size(), 5f, 120f);
 			font.draw(batch, "Selected " + selected.size(), 5f, 100f);
 			font.draw(batch, "Planets " + world.planets.size(), 5f, 80f);
 			font.draw(batch, "FPS " + Gdx.graphics.getFramesPerSecond(), 5f, 60f);
 			font.draw(batch, "Screen Mode " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight(), 5f, 40f);
-			font.draw(batch, NAME + " " + VERSION + "(" + TIMESTAMP + ")", 5f, 20f);
+			font.draw(batch, "D to toggle QuadTree view", 5f, 20f);
 			batch.end();
 		}
 	}
@@ -365,7 +365,7 @@ public class Constellations implements ApplicationListener
 			File file = new File(fname);
 			PrintWriter pw = new PrintWriter(file);
 			pw.println("sep=|");
-			pw.println("creatures,delta");
+			pw.println("creatures|delta");
 			
 			Iterator<String> it = this.log.iterator();
 			while(it.hasNext())

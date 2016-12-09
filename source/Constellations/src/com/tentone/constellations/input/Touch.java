@@ -2,7 +2,7 @@ package com.tentone.constellations.input;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
-import com.tentone.constellations.camera.OrthographicCamera;
+import com.tentone.constellations.graphics.OrthographicCamera;
 
 public class Touch
 {

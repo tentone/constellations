@@ -1,4 +1,4 @@
-package com.tentone.constellations.elements;
+package com.tentone.constellations.object;
 
 import java.util.Iterator;
 

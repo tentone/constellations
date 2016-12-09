@@ -1,3 +1,3 @@
-package com.tentone.constellations.camera;
+package com.tentone.constellations.graphics;
 
 public enum ResizeMode {VERTICAL, HORIZONTAL}

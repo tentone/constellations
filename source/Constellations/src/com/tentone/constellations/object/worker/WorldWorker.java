@@ -1,8 +1,8 @@
-package com.tentone.constellations.worker;
+package com.tentone.constellations.object.worker;
 
 import java.util.Iterator;
 
-import com.tentone.constellations.elements.Creature;
+import com.tentone.constellations.object.Creature;
 import com.tentone.constellations.tree.QuadTree;
 
 public class WorldWorker implements Runnable

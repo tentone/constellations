@@ -3,7 +3,7 @@ package com.tentone.constellations.tree;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.tentone.constellations.elements.Creature;
+import com.tentone.constellations.object.Creature;
 
 public class QuadTreeIterator implements Iterator<Creature>
 {

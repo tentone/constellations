@@ -1,4 +1,4 @@
-package com.tentone.constellations.camera;
+package com.tentone.constellations.graphics;
 
 //Orthographic with aspect ratio and defined size
 public class OrthographicCamera extends com.badlogic.gdx.graphics.OrthographicCamera

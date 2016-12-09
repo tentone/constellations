@@ -1,4 +1,4 @@
-package com.tentone.constellations.elements;
+package com.tentone.constellations.object;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -9,8 +9,9 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
+import com.tentone.constellations.object.worker.WorldWorker;
 import com.tentone.constellations.tree.QuadTree;
-import com.tentone.constellations.worker.WorldWorker;
+import com.tentone.constellations.utils.ThreadUtils;
 
 public class World extends Rectangle
 {
@@ -113,40 +114,49 @@ public class World extends Rectangle
 	//Update world state
 	public void render(float delta, ShapeRenderer shape)
 	{
-		//Don't let delta get to high or too low (10~300fps)
+		//Don't let delta get to high or too low (10~100fps)
 		if(delta > 0.1f)
 		{
 			delta = 0.1f;
 		}
-		else if(delta < 0.00333f)
+		else if(delta < 0.01f)
 		{
-			delta = 0.00333f;
+			delta = 0.01f;
 		}
 		
 		//Update world time
 		this.time += delta;
 		
+		Thread[] thread;
+		
 		//Start world update threads
 		if(this.tree.isLeaf())
 		{
+			thread = new Thread[1];
+			
 			this.workers[0].set(this.tree, delta);
-			new Thread(this.workers[0]).run();
+			thread[0] = new Thread(this.workers[0]);
+			thread[0].run();
 		}
 		else
 		{
+			thread = new Thread[4];
+			
 			for(int i = 0; i < 4; i++)
 			{
 				this.workers[i].set(this.tree.children[i], delta);
-				new Thread(this.workers[i]).run();
+				thread[i] = new Thread(this.workers[i]);
+				thread[i].run();
 			}
 		}
 
-		//Update planets
+		//Update and draw planets
 		Iterator<Planet> itp = this.planets.iterator();
 		while(itp.hasNext())
 		{
 			Planet planet = itp.next();
 			
+			//Update planet
 			planet.update(delta);
 			
 			//Draw planet
@@ -166,6 +176,9 @@ public class World extends Rectangle
 				
 		shape.set(ShapeType.Filled);
 
+		//Wait for all threads to finish updating
+		while(!ThreadUtils.allFinished(thread)){};
+		
 		//Draw creatures
 		Iterator<Creature> itc = this.creatures.iterator();
 		while(itc.hasNext())

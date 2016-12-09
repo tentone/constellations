@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Rectangle;
-import com.tentone.constellations.elements.Creature;
+import com.tentone.constellations.object.Creature;
 import com.tentone.constellations.utils.Generator;
 
 public class QuadTree extends Rectangle
@@ -22,9 +22,12 @@ public class QuadTree extends Rectangle
 	
 	//Identification
 	public int id;
-
+	
 	//Creatures and planets
 	public ConcurrentLinkedQueue<Creature> elements;
+	
+	//Lock the division of the tree
+	public boolean avoid_aggregate;
 	
 	//Quad Tree constructor
 	public QuadTree(float x, float y, float width, float height)
@@ -35,6 +38,7 @@ public class QuadTree extends Rectangle
 		this.children = null;
 		
 		this.id = Generator.generateID();
+		this.avoid_aggregate = true;
 		
 		this.elements = new ConcurrentLinkedQueue<Creature>();
 	}
@@ -47,6 +51,7 @@ public class QuadTree extends Rectangle
 		this.children = null;
 		
 		this.id = Generator.generateID();
+		this.avoid_aggregate = false;
 		
 		this.elements = new ConcurrentLinkedQueue<Creature>();
 	}
@@ -181,7 +186,7 @@ public class QuadTree extends Rectangle
 	//Aggregate elements and destroy children
 	public synchronized void aggregate()
 	{
-		if(!this.isLeaf())
+		if(!this.avoid_aggregate && !this.isLeaf())
 		{
 			QuadTree[] child = this.children;
 			
