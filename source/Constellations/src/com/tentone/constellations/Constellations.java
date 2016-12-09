@@ -38,6 +38,7 @@ public class Constellations implements ApplicationListener
 	//Debug flags
 	private boolean debug_quad_tree = false;
 	private boolean debug_overlay = true;
+	private boolean debug_update = true;
 	
 	//Performance log
 	private LinkedList<String> log = new LinkedList<String>();
@@ -100,7 +101,7 @@ public class Constellations implements ApplicationListener
 		touch = new Touch(camera);
 		
 		//Generate world        
-		world = World.generateWorld(50, 20);
+		world = World.generateWorld(50, 25);
 		
 		//Input processor to handle mouse scrolling
 		Gdx.input.setInputProcessor(new InputAdapter()
@@ -164,6 +165,12 @@ public class Constellations implements ApplicationListener
 			if(Gdx.input.isKeyJustPressed(Keys.O))
 			{
 				debug_overlay = !debug_overlay;
+			}
+			
+			//Toggle pause
+			if(Gdx.input.isKeyJustPressed(Keys.P))
+			{
+				debug_update = !debug_update;
 			}
 		}
 		
@@ -309,8 +316,11 @@ public class Constellations implements ApplicationListener
 		shape.setAutoShapeType(true);
 		shape.begin();
 
-		world.render(delta, shape);	
-
+		if(debug_update)
+		{
+			world.render(delta, shape);	
+		}
+		
 		//Highlight selected creatures
 		Iterator<Creature> its = selected.iterator();
 		shape.setColor(0.6f, 0.6f, 0.6f, 1f);

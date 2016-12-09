@@ -61,7 +61,7 @@ public class World extends Rectangle
 		Planet planet = new Planet(3);
 		while(!world.contains(planet))
 		{
-			planet.setPosition(MathUtils.random(world.width * 0.1f), MathUtils.random(world.height));
+			planet.setPosition(MathUtils.random(world.width * 0.3f), MathUtils.random(world.height));
 		}
 		planet.setOwner(a);
 		planet.setLevel(1);
@@ -73,7 +73,7 @@ public class World extends Rectangle
 		planet = new Planet(3);
 		while(!world.contains(planet))
 		{
-			planet.setPosition(world.width * 0.8f + MathUtils.random(world.width * 0.1f), MathUtils.random(world.height));
+			planet.setPosition(world.width * 0.7f + MathUtils.random(world.width * 0.3f), MathUtils.random(world.height));
 		}
 		planet.setOwner(b);
 		planet.setLevel(1);
@@ -83,15 +83,26 @@ public class World extends Rectangle
 		for(int i = 0; i < 10; i++)
 		{
 			boolean colliding = true;
+			int attempt = 0;
+			
 			planet = null;
 			
 			while(colliding)
 			{
+				if(attempt > 100)
+				{
+					i = 0;
+					while(world.planets.peek().owner == null)
+					{
+						world.planets.poll();
+					}
+				}
+				
 				colliding = false;
 				
 				planet = new Planet(MathUtils.random(1, 2));
 				while(!world.contains(planet))
-				{
+				{					
 					planet.setPosition(MathUtils.random(world.width), MathUtils.random(world.height));
 				}
 				
@@ -101,8 +112,11 @@ public class World extends Rectangle
 					if(planet.overlaps(itp.next()))
 					{
 						colliding = true;
+						break;
 					}
 				}
+				
+				attempt++;
 			}
 			
 			world.addPlanet(planet);
