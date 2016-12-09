@@ -38,7 +38,7 @@ public class Constellations implements ApplicationListener
 	//Debug flags
 	private boolean debug_quad_tree = false;
 	private boolean debug_overlay = true;
-	private boolean debug_update = true;
+	private boolean debug_freeze = true;
 	
 	//Performance log
 	private LinkedList<String> log = new LinkedList<String>();
@@ -170,7 +170,13 @@ public class Constellations implements ApplicationListener
 			//Toggle pause
 			if(Gdx.input.isKeyJustPressed(Keys.P))
 			{
-				debug_update = !debug_update;
+				debug_freeze = !debug_freeze;
+			}
+			
+			//Reset world
+			if(Gdx.input.isKeyJustPressed(Keys.R))
+			{
+				this.world = World.generateWorld(50, 25);
 			}
 		}
 		
@@ -316,7 +322,7 @@ public class Constellations implements ApplicationListener
 		shape.setAutoShapeType(true);
 		shape.begin();
 
-		if(debug_update)
+		if(debug_freeze)
 		{
 			world.render(delta, shape);	
 		}
@@ -362,7 +368,7 @@ public class Constellations implements ApplicationListener
 			font.draw(batch, "Planets " + world.planets.size(), 5f, 80f);
 			font.draw(batch, "FPS " + Gdx.graphics.getFramesPerSecond(), 5f, 60f);
 			font.draw(batch, "Screen Mode " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight(), 5f, 40f);
-			font.draw(batch, "D to toggle QuadTree view", 5f, 20f);
+			font.draw(batch, "D to toggle QuadTree view | R to reset", 5f, 20f);
 			batch.end();
 		}
 	}
