@@ -146,6 +146,8 @@ public class Creature extends Vector2
 		{
 			this.parent.remove(this);
 		}
+		
+		this.world.creatures.remove(this);
 	}
 	
 	//Check if its colliding with another creature

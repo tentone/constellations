@@ -19,13 +19,15 @@ public class World extends Rectangle
 	//Planets, creatures and players
 	public ConcurrentLinkedQueue<Player> players;
 	public ConcurrentLinkedQueue<Planet> planets;
+	public ConcurrentLinkedQueue<Creature> creatures;
+	
 	public QuadTree tree;
 	
 	//Global time
 	public double time;
 	
 	//Workers
-	public ConcurrentLinkedQueue<WorldWorker> workers;
+	public WorldWorker[] workers;
 	
 	//Constructor
 	public World(int width, int height)
@@ -33,12 +35,18 @@ public class World extends Rectangle
 		super(0, 0, width, height);
 		
 		this.players = new ConcurrentLinkedQueue<Player>();
-		this.planets = new ConcurrentLinkedQueue<Planet>();		
+		this.planets = new ConcurrentLinkedQueue<Planet>();
+		this.creatures = new ConcurrentLinkedQueue<Creature>();
 		this.tree = new QuadTree(x, y, width, height);
 		
 		this.time = 0.0;
 		
-		this.workers = new ConcurrentLinkedQueue<WorldWorker>();
+		//Create 4 workers
+		this.workers = new WorldWorker[4];
+		for(int i = 0; i < 4; i++)
+		{
+			this.workers[i] = new WorldWorker(null, 0);
+		}
 	}
 	
 	//Generate random world with 2 players
@@ -103,7 +111,7 @@ public class World extends Rectangle
 	}
 	
 	//Update world state
-	public void update(float delta)
+	public void render(float delta, ShapeRenderer shape)
 	{
 		//Don't let delta get to high or too low (10~300fps)
 		if(delta > 0.1f)
@@ -118,33 +126,32 @@ public class World extends Rectangle
 		//Update world time
 		this.time += delta;
 		
-		//new Thread(new WorldWorker(this)).run();
-		
-		//Update creatures state
-		Iterator<Creature> creatures = this.tree.iterator();
-		while(creatures.hasNext())
+		//Start world update threads
+		if(this.tree.isLeaf())
 		{
-			creatures.next().update(delta);
+			this.workers[0].set(this.tree, delta);
+			new Thread(this.workers[0]).run();
 		}
-		
+		else
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				this.workers[i].set(this.tree.children[i], delta);
+				new Thread(this.workers[i]).run();
+			}
+		}
+
 		//Update planets
-		Iterator<Planet> planets = this.planets.iterator();
-		while(planets.hasNext())
-		{
-			planets.next().update(delta);
-		}
-	}
-	
-	//Draw world
-	public void draw(ShapeRenderer shape)
-	{
-		//Draw planets
 		Iterator<Planet> itp = this.planets.iterator();
 		while(itp.hasNext())
 		{
 			Planet planet = itp.next();
 			
+			planet.update(delta);
+			
+			//Draw planet
 			shape.setColor((planet.owner == null) ? Color.GRAY : planet.owner.color);
+			
 			shape.set(ShapeType.Filled);
 			shape.circle(planet.x, planet.y, planet.life / (float) Planet.life_per_level, 32);
 			shape.rect(planet.x - 0.75f, planet.y - planet.level - 1f, 0.015f * (planet.life % Planet.life_per_level), 0.2f);
@@ -158,14 +165,13 @@ public class World extends Rectangle
 		}
 				
 		shape.set(ShapeType.Filled);
-		
+
 		//Draw creatures
-		Iterator<Creature> itc = this.tree.iterator();
+		Iterator<Creature> itc = this.creatures.iterator();
 		while(itc.hasNext())
 		{
 			Creature creature = itc.next();
-			
-			shape.setColor(creature.owner != null ? creature.owner.color : Color.GRAY);
+			shape.setColor(creature.owner.color);
 			shape.circle(creature.x, creature.y, 0.1f, 4);
 		}
 	}
@@ -188,7 +194,7 @@ public class World extends Rectangle
 	public void addCreature(Creature creature)
 	{
 		creature.world = this;
-		
+		this.creatures.add(creature);
 		this.tree.add(creature);
 	}
 	

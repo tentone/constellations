@@ -27,9 +27,13 @@ import com.tentone.constellations.input.Touch;
 
 public class Constellations implements ApplicationListener
 {
+	//Program meta data
 	public static final String NAME = "Constellations";
 	public static final String VERSION = "V0.0.1";
 	public static final String TIMESTAMP = "201612081110";
+	
+	//Available CPU's
+	public static final int cpu = Runtime.getRuntime().availableProcessors();
 	
 	//Debug flags
 	private boolean debug_quad_tree = false;
@@ -121,7 +125,8 @@ public class Constellations implements ApplicationListener
 		});
 	}
 	
-	public void update()
+	@Override
+	public void render()
 	{
 		touch.update();
 		
@@ -224,7 +229,7 @@ public class Constellations implements ApplicationListener
 				selected.clear();
 				
 				//Select creatures
-				Iterator<Creature> creatures = world.tree.iterator();
+				Iterator<Creature> creatures = world.creatures.iterator();
 				while(creatures.hasNext())
 				{
 					Creature creature = creatures.next();
@@ -285,23 +290,13 @@ public class Constellations implements ApplicationListener
 
 		float delta = Gdx.graphics.getDeltaTime();
 		
-		//Update world
-		world.update(delta);	
-		
 		//Update performance log
 		log_time += delta;
-		
-		if(log_time > 0.5f)
+		if(log_time > 0.05f)
 		{
 			log_time = 0f;
-			log.add(world.tree.size() + "|" + Gdx.graphics.getDeltaTime());
+			log.add(world.tree.size() + "|" + delta);
 		}
-	}
-	
-	@Override
-	public void render()
-	{
-		update();
 		
 		//Render stuff to screen
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -314,8 +309,8 @@ public class Constellations implements ApplicationListener
 		shape.setAutoShapeType(true);
 		shape.begin();
 
-		world.draw(shape);
-		
+		world.render(delta, shape);	
+
 		//Highlight selected creatures
 		Iterator<Creature> its = selected.iterator();
 		shape.setColor(0.6f, 0.6f, 0.6f, 1f);
@@ -351,6 +346,7 @@ public class Constellations implements ApplicationListener
 			batch.setProjectionMatrix(overlay.combined);
 			batch.begin();
 
+			font.draw(batch, "CPU " + cpu, 5f, 140f);
 			font.draw(batch, "Creatures " + world.tree.size(), 5f, 120f);
 			font.draw(batch, "Selected " + selected.size(), 5f, 100f);
 			font.draw(batch, "Planets " + world.planets.size(), 5f, 80f);

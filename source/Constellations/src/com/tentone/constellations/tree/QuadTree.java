@@ -148,13 +148,6 @@ public class QuadTree extends Rectangle
 		}
 	}
 	
-	//Clear the quad tree
-	public void clear()
-	{
-		this.elements.clear();
-		this.children = null;
-	}
-	
 	//Subdivide quad tree leaf
 	public synchronized void subdivide()
 	{
@@ -228,13 +221,26 @@ public class QuadTree extends Rectangle
 			}
 		}
 		
-		if(node.children != null)
+		if(!node.isLeaf())
 		{
 			for(int i = 0; i < node.children.length; i++)
 			{
 				fillLinkedList(node.children[i], list);
 			}
 		}
+	}
+	
+	//Clear the quad tree
+	public void clear()
+	{
+		this.elements.clear();
+		this.children = null;
+	}
+	
+	//Iterator
+	public Iterator<Creature> iterator()
+	{
+		return new QuadTreeIterator(this);
 	}
 	
 	//Get size
@@ -263,12 +269,6 @@ public class QuadTree extends Rectangle
 	public boolean isRoot()
 	{
 		return this.parent == null;
-	}
-
-	//Iterator to all creatures attached to this node and its children
-	public Iterator<Creature> iterator()
-	{
-		return new QuadTreeIterator(this);
 	}
 	
 	//Debug the quad tree
