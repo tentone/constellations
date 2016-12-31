@@ -29,7 +29,7 @@ public class QuadTreeIterator implements Iterator<Creature>
 			list.add(node.elements.iterator());
 		}
 		
-		if(node.children != null)
+		if(node.children != QuadTree.EMPTY)
 		{
 			for(int i = 0; i < node.children.length; i++)
 			{

@@ -9,7 +9,7 @@ public class Planet extends Circle
 	private static final long serialVersionUID = 2799808330666229595L;
 	
 	//Constants
-	public static final float spawn_time = 0.5f;
+	public static final float spawn_time = 0.1f;
 	public static final int life_per_level = 100;
 	public static final int life_per_creature = 2;
 	
@@ -102,8 +102,6 @@ public class Planet extends Circle
 	//Process creature collisions with planet
 	public void collidePlanet(Creature creature)
 	{
-		assert creature != null;
-		
 		if(creature.task == Task.Conquer && !this.conquered && creature.target == this)
 		{
 			if(this.owner == null)
@@ -181,8 +179,6 @@ public class Planet extends Circle
 	//Set planet owner
 	public void setOwner(Player player)
 	{
-		assert player != null;
-		
 		this.owner = player;
 		this.life = this.level * life_per_level;
 		this.conquered = true;

@@ -12,22 +12,25 @@ import com.tentone.constellations.utils.Generator;
 public class QuadTree extends Rectangle
 {
 	private static final long serialVersionUID = 6162394780903176025L;
-
+	
+	//Children tree position
+	public static final int LEFT_UP = 0, RIGHT_UP = 1, LEFT_DOWN = 2, RIGHT_DOWN = 3;
+	
+	//Empty children array
+	public static final QuadTree EMPTY[] = new QuadTree[0];
+	
 	//Parent and children pointer
 	public QuadTree parent;
 	public QuadTree children[];
 	
 	//Max elements per node before subdivision
-	public final int max_elements = 8;
+	public int max_elements = 5;
 	
-	//Identification
-	public int id;
+	//Identification and level
+	public int id, level;
 	
-	//Creatures and planets
+	//Creatures
 	public ConcurrentLinkedQueue<Creature> elements;
-	
-	//Lock the division of the tree
-	public boolean avoid_aggregate;
 	
 	//Quad Tree constructor
 	public QuadTree(float x, float y, float width, float height)
@@ -35,11 +38,11 @@ public class QuadTree extends Rectangle
 		super(x, y, width, height);
 
 		this.parent = null;		
-		this.children = null;
+		this.children = EMPTY;
 		
 		this.id = Generator.generateID();
-		this.avoid_aggregate = true;
-		
+		this.level = 0;
+
 		this.elements = new ConcurrentLinkedQueue<Creature>();
 	}
 
@@ -48,10 +51,10 @@ public class QuadTree extends Rectangle
 		super(x, y, width, height);
 		
 		this.parent = parent;
-		this.children = null;
+		this.children = EMPTY;
 		
 		this.id = Generator.generateID();
-		this.avoid_aggregate = false;
+		this.level = parent.level + 1;
 		
 		this.elements = new ConcurrentLinkedQueue<Creature>();
 	}
@@ -93,6 +96,31 @@ public class QuadTree extends Rectangle
 		{
 			return this.parent.add(creature);
 		}
+		//If its root and does not contain the creature create a new root and add this quadtree as its children
+		else
+		{
+			//TODO <ADD CODE HERE>
+			
+			/*if(creature.x < this.x)
+			{
+				if(creature.y < this.y)
+				{
+					this.parent = new QuadTree(this.x - this.width, this.y - this.height, this.width * 2, this.height * 2);
+					this.parent.subdivide();
+					this.parent.children[2] = this;
+				}
+				else// if(creature.y > this.y + this.height)
+				{
+					this.parent = new QuadTree(this.x - this.width, this.y + this.height, this.width * 2, this.height * 2);
+					this.parent.subdivide();
+					this.parent.children[3] = this;
+				}
+			}
+			else// if(creature.x > this.x + this.width)
+			{
+
+			}*/
+		}
 		
 		return false;
 	}
@@ -109,7 +137,7 @@ public class QuadTree extends Rectangle
 			removed = true;
 		}
 		//If its not leaf remove from children
-		else if(this.isLeaf())
+		else if(!this.isLeaf())
 		{
 			for(int i = 0; i < this.children.length; i++)
 			{
@@ -186,11 +214,11 @@ public class QuadTree extends Rectangle
 	//Aggregate elements and destroy children
 	public synchronized void aggregate()
 	{
-		if(!this.avoid_aggregate && !this.isLeaf())
+		if(this.level > 0 && !this.isLeaf())
 		{
 			QuadTree[] child = this.children;
 			
-			this.children = null;
+			this.children = EMPTY;
 			
 			for(int i = 0; i < child.length; i++)
 			{
@@ -239,7 +267,7 @@ public class QuadTree extends Rectangle
 	public void clear()
 	{
 		this.elements.clear();
-		this.children = null;
+		this.children = EMPTY;
 	}
 	
 	//Iterator
@@ -267,7 +295,7 @@ public class QuadTree extends Rectangle
 	//Check if quad tree is a leaf
 	public boolean isLeaf()
 	{
-		return this.children == null;
+		return this.children == EMPTY;
 	}
 	
 	//Check if quad tree is the root

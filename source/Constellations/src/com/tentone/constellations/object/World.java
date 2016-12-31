@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.tentone.constellations.object.worker.WorldWorker;
 import com.tentone.constellations.tree.QuadTree;
+import com.tentone.constellations.utils.Generator;
 import com.tentone.constellations.utils.ThreadUtils;
 
 public class World extends Rectangle
@@ -54,38 +55,31 @@ public class World extends Rectangle
 	public static World generateWorld(int width, int height)
 	{
 		World world = new World(width, height);
+		int players = 5;
 		
-		Player a = new Player("a");
-		world.addPlayer(a);
-		
-		Planet planet = new Planet(3);
-		while(!world.contains(planet))
+		for(int i = 0; i < players; i++)
 		{
-			planet.setPosition(MathUtils.random(world.width * 0.3f), MathUtils.random(world.height));
+			Player player = new Player("User" + Generator.generateID());
+			world.addPlayer(player);
+			
+			Planet planet = new Planet(3);
+			while(!world.contains(planet))
+			{
+				planet.setPosition(MathUtils.random(world.width * 1.0f / players * i, world.width * 1.0f / players * (i + 1)), MathUtils.random(world.height));
+			}
+			
+			planet.setOwner(player);
+			planet.setLevel(1);
+			world.addPlanet(planet);
 		}
-		planet.setOwner(a);
-		planet.setLevel(1);
-		world.addPlanet(planet);
-
-		Player b = new Player("b");
-		world.addPlayer(b);
-		
-		planet = new Planet(3);
-		while(!world.contains(planet))
-		{
-			planet.setPosition(world.width * 0.7f + MathUtils.random(world.width * 0.3f), MathUtils.random(world.height));
-		}
-		planet.setOwner(b);
-		planet.setLevel(1);
-		world.addPlanet(planet);
 		
 		//Create planets
-		for(int i = 0; i < 10; i++)
+		for(int i = 0; i < 20; i++)
 		{
 			boolean colliding = true;
 			int attempt = 0;
 			
-			planet = null;
+			Planet planet = null;
 			
 			while(colliding)
 			{
@@ -125,7 +119,7 @@ public class World extends Rectangle
 		return world;
 	}
 	
-	//Update world state
+	//Update world state and render
 	public void render(float delta, ShapeRenderer shape)
 	{
 		//Don't let delta get to high or too low (10~100fps)

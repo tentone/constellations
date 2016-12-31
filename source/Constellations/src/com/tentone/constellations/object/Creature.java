@@ -10,7 +10,11 @@ import com.tentone.constellations.utils.Generator;
 public class Creature extends Vector2
 {
 	private static final long serialVersionUID = 7669506454940957738L;
-	private static final float friction = 2.0f;
+	
+	private static final float ATTRACTION_DISTANCE = 2.0f;
+	private static final float COLLISION_DISTANCE = 0.1f;
+	private static final float FRICTION = 2.0f;
+	private static final float TURBULENCE = 0.03f;
 	
 	//World pointer
 	public World world;
@@ -59,7 +63,7 @@ public class Creature extends Vector2
 			float distance = dst(planet.x, planet.y);
 			
 			//Check if its close to planet
-			if(distance < 2f * planet.level)
+			if(distance < planet.level + 2f)
 			{
 				Vector2 direction = new Vector2(planet.x - x, planet.y - y);
 				direction.nor();
@@ -69,38 +73,33 @@ public class Creature extends Vector2
 				{
 					//Process planet collision
 					planet.collidePlanet(this);
-					
-					direction.scl(0.1f);
-					velocity.sub(direction.x, direction.y);
+					direction.scl(0.15f);
+					velocity.sub(direction);
 				}
 				//Close to the planet ring
 				else
 				{
 					direction.scl(0.12f);
-					direction.rotateRad(0.8f);
-					velocity.add(direction.x, direction.y);
+					direction.rotateRad(0.7f);
+					velocity.add(direction);
 				}
 			}
-
+			
 			//Creature reacts to close creatures
 			if(this.parent != null)
 			{
-				Iterator<Creature> creatures = this.parent.elements.iterator();
-				while(creatures.hasNext())
+				//Calculate how many level to go up
+				int levels = MathUtils.roundPositive(ATTRACTION_DISTANCE / this.parent.height);
+				QuadTree parent = this.parent;
+				
+				//Go up the tree
+				while(levels > 0 && parent.parent != null)
 				{
-					Creature creature = creatures.next();
-					
-					//Check if creatures are from different owners
-					if(this.owner != creature.owner)
-					{
-						if(this.colliding(creature))
-						{
-							this.destroy();
-							creature.destroy();
-							return;
-						}
-					}
+					parent = parent.parent;
+					levels--;
 				}
+				
+				this.updateTree(this.parent);
 			}
 		}
 		
@@ -109,11 +108,8 @@ public class Creature extends Vector2
 		{
 			float distance = dst(destination);
 			
-			if(distance < 0.3f)
-			{
-				this.task = Task.Idle;
-			}
-			else
+			//Check is destination reached
+			if(distance > 0.2f)
 			{
 				Vector2 direction = new Vector2(destination.x - x, destination.y - y);
 				direction.nor();
@@ -121,21 +117,73 @@ public class Creature extends Vector2
 				
 				velocity.add(direction);
 			}
+			//If destination reached set state to idle
+			else
+			{
+				this.task = Task.Idle;
+			}
 		}
 		
-		velocity.x += MathUtils.random(-0.03f, 0.03f);
-		velocity.y += MathUtils.random(-0.03f, 0.03f);
+		//Random movement
+		velocity.x += MathUtils.random(-TURBULENCE, TURBULENCE);
+		velocity.y += MathUtils.random(-TURBULENCE, TURBULENCE);
 		
 		//Update position
 		add(velocity.x * delta, velocity.y * delta);
 		
 		//Apply friction
-		velocity.sub(velocity.x * delta * friction, velocity.y * delta * friction);
+		velocity.sub(velocity.x * delta * FRICTION, velocity.y * delta * FRICTION);
 		
 		//Update position inside tree
 		if(this.parent != null)
 		{
 			this.parent.update(this);
+		}
+	}
+	
+	//Update creatures of tree
+	public void updateTree(QuadTree tree)
+	{
+		if(tree.elements.size() > 0)
+		{
+			Iterator<Creature> creatures = tree.elements.iterator();
+			while(creatures.hasNext())
+			{
+				updateCreature(creatures.next());
+			}
+		}
+		
+		if(!tree.isLeaf())
+		{
+			for(int i = 0; i < tree.children.length; i++)
+			{
+				updateTree(tree.children[i]);
+			}
+		}
+	}
+	
+	//Update data relative to creature
+	public void updateCreature(Creature creature)
+	{
+		//Check if creatures are from different owners
+		if(this.owner != creature.owner)
+		{
+			float dist = dst(creature);
+			
+			if(dist < COLLISION_DISTANCE)
+			{
+				this.destroy();
+				creature.destroy();
+				return;
+			}
+			else if(dist < ATTRACTION_DISTANCE)
+			{
+				Vector2 direction = new Vector2(creature.x - x, creature.y - y);
+				direction.nor();
+				direction.scl(0.001f);
+				
+				velocity.add(direction);
+			}
 		}
 	}
 	
@@ -148,12 +196,6 @@ public class Creature extends Vector2
 		}
 		
 		this.world.creatures.remove(this);
-	}
-	
-	//Check if its colliding with another creature
-	public boolean colliding(Creature creature)
-	{
-		return dst(creature) < 0.1f;
 	}
 	
 	//Set creature position

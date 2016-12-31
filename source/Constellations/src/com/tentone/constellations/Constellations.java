@@ -29,11 +29,11 @@ public class Constellations implements ApplicationListener
 {
 	//Program meta data
 	public static final String NAME = "Constellations";
-	public static final String VERSION = "V0.0.1";
-	public static final String TIMESTAMP = "201612090133";
+	public static final String VERSION = "V0.0.2";
+	public static final String TIMESTAMP = "201612312224";
 	
-	//Available CPU's
-	public static final int avaiable_processors = Runtime.getRuntime().availableProcessors();
+	//Available CPUs
+	public static final int AVAILABLE_CPU = Runtime.getRuntime().availableProcessors();
 	
 	//Debug flags
 	private boolean debug_quad_tree = false;
@@ -101,7 +101,7 @@ public class Constellations implements ApplicationListener
 		touch = new Touch(camera);
 		
 		//Generate world        
-		world = World.generateWorld(50, 25);
+		world = World.generateWorld(80, 40);
 		
 		//Input processor to handle mouse scrolling
 		Gdx.input.setInputProcessor(new InputAdapter()
@@ -362,7 +362,7 @@ public class Constellations implements ApplicationListener
 			batch.setProjectionMatrix(overlay.combined);
 			batch.begin();
 			font.draw(batch, NAME + " " + VERSION + "(" + TIMESTAMP + ")", 5f, 160f);
-			font.draw(batch, "Processors " + avaiable_processors, 5f, 140f);
+			font.draw(batch, "Processors " + AVAILABLE_CPU, 5f, 140f);
 			font.draw(batch, "Creatures " + world.tree.size(), 5f, 120f);
 			font.draw(batch, "Selected " + selected.size(), 5f, 100f);
 			font.draw(batch, "Planets " + world.planets.size(), 5f, 80f);
